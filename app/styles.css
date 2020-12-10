@@ -14,10 +14,3 @@ body > * {
 	margin-bottom: 1em;
 }
 
-canvas {
-	background: white;
-	image-rendering: pixelated;
-	--scale:3;
-	transform: scale(var(--scale));
-	transform-origin: left top;
-}

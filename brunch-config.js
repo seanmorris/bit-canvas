@@ -9,7 +9,7 @@ module.exports = {
 			, plugins: ["@babel/plugin-proposal-class-properties"]
 		}
 		, raw: {
-			pattern: /\.tmp\.(.+)$/,
+			pattern: /\.html$/,
 			wrapper: content => `module.exports = ${JSON.stringify(content)}`
 		}
 	}
