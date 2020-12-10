@@ -1,0 +1,40 @@
+<div data-module = "canvas">
+
+	<label>
+		width
+		<input cv-bind = "width" type = "number" min = "0">
+	</label>
+
+	<label>
+		height
+		<input cv-bind = "height" type = "number" min = "0">
+	</label>
+
+	<label>
+		scale
+		<input cv-bind = "scale" type = "number" min = "1">
+	</label>
+
+	<label>
+		offset
+		<input cv-bind = "offset" type = "number" min = "0">
+	</label>
+
+	<label>
+		<input type = "file" cv-bind = "input">
+	</label>
+
+	<div class = "canvas-window">
+		<canvas cv-ref = "canvas" cv-on = "wheel(event)"></canvas>
+		<div>Gameboy 2pbb mode</div>
+	</div>
+
+
+	<!-- <label>
+		<select>
+			<option>greyscale (1 byte per pixel)</option>
+			<option>b+w (1 bit per pixel)</option>
+		</select>
+	</label> -->
+
+</div>

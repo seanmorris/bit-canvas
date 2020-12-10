@@ -1,0 +1,27 @@
+[data-module=canvas] {
+	display: flex;
+	flex-direction: column;
+}
+
+[data-module=canvas] > * {
+	margin-bottom: 0.5em;
+}
+
+[data-module=canvas] label {
+	display: flex;
+	flex-direction: column;
+}
+
+[data-module=canvas] .canvas-window {
+	border: 1px solid #555;
+	padding: 0.5em;
+}
+
+[data-module=canvas] canvas {
+	background: grey;
+	image-rendering: pixelated;
+	--scale: 1;
+	width: calc(calc(var(--width) * var(--scale)) * 1px) !important;
+	height: calc(calc(var(--height) * var(--scale)) * 1px) !important;
+	transform-origin: left top;
+}
