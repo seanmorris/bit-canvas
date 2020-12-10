@@ -1,0 +1,23 @@
+body {
+	font-family: verdana;
+	display: flex;
+	flex-direction: column;
+	background: black;
+	padding: 1em;
+	padding-top: 0em;
+	color: white;
+}
+
+body > * {
+	box-sizing: border-box;
+	margin-top: 1em;
+	margin-bottom: 1em;
+}
+
+canvas {
+	background: white;
+	image-rendering: pixelated;
+	--scale:3;
+	transform: scale(var(--scale));
+	transform-origin: left top;
+}
