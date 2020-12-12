@@ -2,5 +2,9 @@
 	drop files here.
 </div>
 
-
-<div data-module = "panels" cv-each = "files:file">[[file]]</div>
+<div data-module = "file-list" cv-each = "files:file">
+	<div class = "file">
+		<img src = "/gameboy.ico">
+		<span>[[file.name]]</span>
+	</div>
+</div>

@@ -26,6 +26,8 @@ export class Drop extends View
 		});
 
 		rootPanel.args.panels.push(new Panel({title, widget}));
+
+		this.args.files.push({name: file.name, file});
 	}
 
 	dragover(event)
