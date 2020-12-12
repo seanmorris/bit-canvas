@@ -1,6 +1,8 @@
 # BitCavas
 
-Render bytes from files as dots.
+Render binaries to canvas. Visualize data as you process it.
+
+Currently aiming at decompressing gameboy graphics with algorithms such as 2BPP, 1BPP, RLE & LZSS.
 
 https://bit-canvas.seanmorr.is/
 
