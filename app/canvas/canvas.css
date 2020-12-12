@@ -1,27 +1,39 @@
-[data-module=canvas] {
+[data-module~=canvas] {
 	display: flex;
 	flex-direction: column;
 }
 
-[data-module=canvas] > * {
-	margin-bottom: 0.5em;
+[data-module~=canvas] p {
+	font-size: 0.75em;
+	margin-bottom: 0.25em;
+	margin-top: 0.25em;
 }
 
-[data-module=canvas] label {
+[data-module~=canvas] label {
 	display: flex;
 	flex-direction: column;
 }
 
-[data-module=canvas] .canvas-window {
+[data-module~=canvas] .canvas-window {
+	display: flex;
+	flex-direction: column;
 	border: 1px solid #555;
 	padding: 0.5em;
+	flex: 1;
 }
 
-[data-module=canvas] canvas {
-	background: grey;
+[data-module~=canvas] canvas {
+	align-self: center;
+	background: #152008;
 	image-rendering: pixelated;
 	--scale: 1;
 	width: calc(calc(var(--width) * var(--scale)) * 1px) !important;
 	height: calc(calc(var(--height) * var(--scale)) * 1px) !important;
+	transition: width 0.125s ease-out, height 0.125s ease-out;
 	transform-origin: left top;
+	margin-bottom: 0.5em;
+}
+
+[data-module~=canvas] .icon {
+	cursor: pointer;
 }

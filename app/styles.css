@@ -1,16 +1,74 @@
+html {
+	height: 100%;
+	width: 100%;
+	display: flex;
+	padding: 0em;
+	margin: 0em;
+}
+
 body {
+	width: 100%;
+	margin: 0em;
 	font-family: verdana;
 	display: flex;
 	flex-direction: column;
-	background: black;
-	padding: 1em;
-	padding-top: 0em;
+	background: #777;
+	padding: 0em;
 	color: white;
 }
 
-body > * {
-	box-sizing: border-box;
-	margin-top: 1em;
-	margin-bottom: 1em;
+a {
+	color: white;
 }
 
+.row {
+	display: flex;
+	flex-direction: row;
+}
+
+.column {
+	display: flex;
+	flex-direction: column;
+}
+
+.right {
+	margin-left: auto;
+}
+
+.icon.inline-icon {
+	display: inline-block;
+	margin-right: 0.25em;
+	background-image: url(/default-icon.svg);
+	background-size: 100%;
+	width: 1em;
+	height: 1em;
+	transition: filter 0.25s ease-out;
+}
+
+.icon.gear-icon {
+	background-image: url(/gear-icon.svg);
+}
+
+.icon.save-icon {
+	background-image: url(/disk-icon.svg);
+}
+
+.icon.folder-icon {
+	background-image: url(/folder-icon.svg);
+}
+
+.icon.zoom-out-icon {
+	background-image: url(/zoom-out-icon.svg);
+}
+
+.icon.zoom-in-icon {
+	background-image: url(/zoom-in-icon.svg);
+}
+
+.icon.run-icon {
+	background-image: url(/run-icon.svg);
+}
+
+.icon.x-icon {
+	background-image: url(/x-icon.svg);
+}

@@ -1,40 +1,71 @@
 <div data-module = "canvas">
 
-	<label>
-		width
-		<input cv-bind = "width" type = "number" min = "0">
+	<label cv-if = "buffer">
+		<div>
+			<div class = "icon inline-icon gear-icon" cv-on = "click:toggleSettings(event)"></div>
+			<div class = "icon inline-icon save-icon"cv-on = "click:save(event)"></div>
+			<div class = "icon inline-icon run-icon" cv-on = "click:run(event)"></div>
+			<!-- <div class = "icon inline-icon folder-icon"></div> -->
+		</div>
 	</label>
 
-	<label>
-		height
-		<input cv-bind = "height" type = "number" min = "0">
-	</label>
+	<span cv-if = "showSettings">
 
-	<label>
-		scale
-		<input cv-bind = "scale" type = "number" min = "1">
-	</label>
+		<label cv-if = "buffer">
+			<p>width</p>
+			<input cv-bind = "width" type = "number" min = "0">
+		</label>
 
-	<label>
-		offset
-		<input cv-bind = "offset" type = "number" min = "0">
-	</label>
+		<label cv-if = "buffer">
+			<p>height</p>
+			<input cv-bind = "height" type = "number" min = "0">
+		</label>
 
-	<label>
+		<label cv-if = "buffer">
+			<p>scale</p>
+			<input cv-bind = "scale" type = "number" min = "1">
+		</label>
+
+		<label cv-if = "buffer">
+			<p>row</p>
+			<input cv-bind = "offset" type = "number" min = "0">
+		</label>
+	</span>
+
+	<label cv-if = "!buffer">
 		<input type = "file" cv-bind = "input">
 	</label>
 
-	<div class = "canvas-window">
-		<canvas cv-ref = "canvas" cv-on = "wheel(event)"></canvas>
-		<div>Gameboy 2pbb mode</div>
-	</div>
-
-
-	<!-- <label>
-		<select>
-			<option>greyscale (1 byte per pixel)</option>
-			<option>b+w (1 bit per pixel)</option>
+	<label cv-if = "buffer">
+		<p>encoding</p>
+		<select cv-bind = "decoder">
+			<optgroup label = "streams">
+				<!-- <option value = "">32 bit color (R,G,B,A...)*</option> -->
+				<!-- <option value = "">24 bit color (R,G,B...)*</option> -->
+				<!-- <option value = "">16 bit greyscale*</option> -->
+				<option value = "bytes">8 bit greyscale</option>
+				<!-- <option value = "">4 bit greyscale*</option> -->
+				<!-- <option value = "">2 bit greyscale*</option> -->
+				<option value = "bits">1 bit black & white</option>
+			</optgroup>
+			<optgroup label = "tiles">
+				<option value = "gameboy">2 bit gameboy (2bpp)</option>
+				<option value = "gameboy-1bit">1 bit gameboy (1bpp)</option>
+			</optgroup>
 		</select>
-	</label> -->
+	</label>
 
+	<label cv-if = "buffer">
+		<p>buffer</p>
+		<div class = "canvas-window">
+			<canvas cv-ref = "canvas" cv-on = "wheel(event)"></canvas>
+			<div class = "row">
+				<div><code>0x[[firstByte]]</code></div>
+				<div class = "right">
+					<div class = "icon inline-icon zoom-out-icon" cv-on = "click:zoomOut(event)"></div>
+					<div class = "icon inline-icon zoom-in-icon" cv-on = "click:zoomIn(event)"></div>
+				</div>
+			</div>
+		</div>
+	</label>
 </div>

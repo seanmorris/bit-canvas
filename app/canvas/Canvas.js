@@ -1,4 +1,7 @@
-import { View } from 'curvature/base/View';
+import { View }   from 'curvature/base/View';
+import { Menu }   from '../menu/Menu';
+import { Panel }  from '../panel/Panel';
+import { Invert } from '../processor/Invert';
 
 export class Canvas extends View
 {
@@ -8,15 +11,21 @@ export class Canvas extends View
 	{
 		super(args, parent);
 
-		this.args.width  = 128;
-		this.args.height = 128;
-		this.args.offset = 0;
-		this.args.scale  = 1;
+		this.args.width   = 128;
+		this.args.height  = 128;
+		this.args.offset  = 0;
+		this.args.scale   = 2;
+		this.scrollDelta  = 1;
 
-		this.file = false;
+		this.args.decoder  = 'gameboy';
+		this.args.showSettings = false;
+
+		this.args.buffer = this.args.buffer || false;
+
+		this.args.firstByte = '0000';
 	}
 
-	onAttached()
+	onRendered()
 	{
 		const canvasStyle = {
 			'--scale':    this.args.scale
@@ -26,33 +35,86 @@ export class Canvas extends View
 
 		this.args.bindTo('offset', (v,k) => {
 			this.args.offset = v;
-			this.file && this.drawDots(this.file);
-		});
+
+			if(!this.args.buffer || !this.tags.canvas)
+			{
+				return;
+			}
+
+			this.drawDots(this.args.buffer);
+		}, {wait: 0});
 
 		this.args.bindTo('scale', (v,k) => {
-			canvasStyle['--scale'] = v;
-			this.tags.canvas.style(canvasStyle);
-			this.file && this.drawDots(this.file);
+			if(this.tags.canvas)
+			{
+				canvasStyle['--scale'] = v;
+				this.tags.canvas.style(canvasStyle);
+			}
+
+			if(this.args.buffer)
+			{
+				this.drawDots(this.args.buffer);
+			}
 		});
 
 		this.args.bindTo('width', (v,k) => {
-			canvasStyle['--width'] = v;
-			this.tags.canvas.style(canvasStyle);
-			this.tags.canvas.width = v;
-			this.file && this.drawDots(this.file);
+			if(this.tags.canvas)
+			{
+				canvasStyle['--width'] = v;
+				this.tags.canvas.style(canvasStyle);
+				this.tags.canvas.width = v;
+			}
+
+			if(this.args.buffer)
+			{
+				this.drawDots(this.args.buffer);
+			}
 		});
 
 		this.args.bindTo('height', (v,k) => {
-			canvasStyle['--height'] = v;
-			this.tags.canvas.style(canvasStyle);
-			this.tags.canvas.height = v;
-			this.file && this.drawDots(this.file);
+			if(this.tags.canvas)
+			{
+				canvasStyle['--height'] = v;
+				this.tags.canvas.style(canvasStyle);
+				this.tags.canvas.height = v;
+			}
+
+			if(this.args.buffer)
+			{
+				this.drawDots(this.args.buffer);
+			}
+
 		});
 
 		this.args.bindTo('input', v => {
-			v && this.drawDots(v);
-			this.file = v;
+			if(!v)
+			{
+				return;
+			}
+
+			this.args.filename = v.name;
+
+			const reader = new FileReader();
+			reader.readAsArrayBuffer(v);
+
+			reader.onload = () => {
+				this.args.buffer = new Uint8Array(reader.result);
+				this.onTimeout(0, () => {
+					this.drawDots(this.args.buffer);
+				});
+			};
 		});
+
+		this.args.bindTo('decoder', v => {
+
+			if(!this.args.buffer)
+			{
+				return;
+			}
+
+			this.drawDots(this.args.buffer);
+
+		}, {frame: true});
 	}
 
 	wheel(event)
@@ -61,11 +123,11 @@ export class Canvas extends View
 
 		if(event.deltaY < 1 && this.args.offset > 0)
 		{
-			this.args.offset = Number(this.args.offset) - 1;
+			this.args.offset = Number(this.args.offset) - this.scrollDelta;
 		}
 		else if(event.deltaY > 1)
 		{
-			this.args.offset = Number(this.args.offset) + 1;
+			this.args.offset = Number(this.args.offset) + this.scrollDelta;
 		}
 
 		if(0 > this.args.offset)
@@ -74,24 +136,38 @@ export class Canvas extends View
 		}
 	}
 
-	drawDots(file)
+	drawDots(bytes)
 	{
-		const reader = new FileReader();
+		const canvas  = this.tags.canvas;
+		const context = canvas.getContext('2d');
 
-		reader.readAsArrayBuffer(file);
+		requestAnimationFrame(()=>context.clearRect(0, 0, canvas.width, canvas.height));
 
-		reader.onload = () => {
-			const bytes = new Uint8Array(reader.result);
-			this.nin2bit(bytes);
-		};
+		switch(this.args.decoder)
+		{
+			case 'bytes':
+				this.bytePerPixel(bytes);
+				break;
+			case 'gameboy':
+				this.nin2bit(bytes);
+				break;
+			case 'gameboy-1bit':
+				this.nin1bit(bytes);
+				break;
+			case 'bits':
+				this.bitPerPixel(bytes);
+				break;
+		}
 	};
 
-	nin2bit(bytes)
+	nin1bit(bytes)
 	{
+		this.scrollDelta = 1;
+
 		const pallet  = [
 			[0xFF, 0xFF, 0xFF]
 			, [0x44, 0x44, 0x44]
-			, [0x88, 0x88, 0x88]
+			, [0xCC, 0xCC, 0xCC]
 			, [0x00, 0x00, 0x00]
 		];
 		const canvas  = this.tags.canvas;
@@ -105,24 +181,115 @@ export class Canvas extends View
 		const offset = this.args.offset;
 		const width  = this.args.width;
 
-		const pixels = context.createImageData(
-			maxTilesX * 8, context.canvas.height
-		);
+		const pixelsList = [];
 
-		const pixelsList = []
+		this.args.firstByte = (offset * (maxTilesX) * 8).toString(16).padStart(4,'0');
+
+		for(let i = 0; i < bytes.length; i += 1)
+		{
+			const byte = bytes[i];
+
+			if(o < offset * (maxTilesX) * 8)
+			{
+				o++;
+				continue;
+			}
+
+			if(o > (height * width) + (offset * (maxTilesX * 8)))
+			{
+				break;
+			}
+
+			const bits = [
+				(byte & 0b10000000) >> 7
+				, (byte & 0b01000000) >> 6
+				, (byte & 0b00100000) >> 5
+				, (byte & 0b00010000) >> 4
+				, (byte & 0b00001000) >> 3
+				, (byte & 0b00000100) >> 2
+				, (byte & 0b00000010) >> 1
+				, (byte & 0b00000001) >> 0
+			];
+
+			for(const j in bits)
+			{
+				const bit = bits[j];
+
+				const ii = o - offset * maxTilesX * 8;
+
+				const currentTile  = Math.floor(ii / 64);
+				const currentTileX = currentTile % maxTilesX;
+				const currentTileY = Math.floor(currentTile / maxTilesX);
+				const fromTile     = ii % 64;
+				const fromTileY    = Math.floor(fromTile / 8);
+				const fromTileX    = fromTile % 8;
+
+				if(!pixelsList[currentTileY])
+				{
+					pixelsList[currentTileY] = context.createImageData(
+						maxTilesX * 8, 8
+					);
+				}
+
+				const pixels = pixelsList[currentTileY];
+
+				const fromOriginX = (currentTileX * 8) + fromTileX;
+				const fromOriginY = fromTileY;
+
+				const address = 4 * (maxTilesX * 8 * fromOriginY + fromOriginX);
+
+				pixels.data[address+0] = 255;
+				pixels.data[address+1] = 255;
+				pixels.data[address+2] = 255;
+				pixels.data[address+3] = bits[j] * 196;
+
+				o++;
+			}
+		}
+
+		for(const p in pixelsList)
+		{
+			requestAnimationFrame(()=>context.putImageData(pixelsList[p], 0, p*8));
+		}
+	}
+
+	nin2bit(bytes)
+	{
+		this.scrollDelta = 1;
+
+		const pallet  = [
+			[0xFF, 0xFF, 0xFF]
+			, [0x44, 0x44, 0x44]
+			, [0xCC, 0xCC, 0xCC]
+			, [0x00, 0x00, 0x00]
+		];
+		const canvas  = this.tags.canvas;
+		const context = canvas.getContext('2d');
+
+		let o = 0;
+
+		const maxTilesX = Math.floor(this.args.width / 8);
+
+		const height = Math.ceil(this.args.height / 8) * 8;
+		const offset = this.args.offset;
+		const width  = this.args.width;
+
+		const pixelsList = [];
+
+		this.args.firstByte = (offset * (maxTilesX) * 8).toString(16).padStart(4,'0');
 
 		for(let i = 0; i < bytes.length; i += 2)
 		{
 			const byteA = bytes[i];
 			const byteB = bytes[i+1];
 
-			if(o < offset * (maxTilesX * 8) * 8)
+			if(o < offset * (maxTilesX) * 8)
 			{
 				o++;
 				continue;
 			}
 
-			if(o > (height * width) + (offset * (maxTilesX * 64)))
+			if(o > (height * width) + (offset * (maxTilesX * 8)))
 			{
 				break;
 			}
@@ -140,7 +307,7 @@ export class Canvas extends View
 
 			for(const j in bitPairs)
 			{
-				const ii = o - offset * maxTilesX * 64;
+				const ii = o - offset * maxTilesX * 8;
 
 				const currentTile  = Math.floor(ii / 64);
 				const currentTileX = currentTile % maxTilesX;
@@ -156,7 +323,7 @@ export class Canvas extends View
 					);
 				}
 
-				const ppixels = pixelsList[currentTileY];
+				const pixels = pixelsList[currentTileY];
 
 				const fromOriginX = (currentTileX * 8) + fromTileX;
 				const fromOriginY = fromTileY;
@@ -166,12 +333,7 @@ export class Canvas extends View
 				pixels.data[address+0] = pallet[ bitPairs[j] ][0];
 				pixels.data[address+1] = pallet[ bitPairs[j] ][1];
 				pixels.data[address+2] = pallet[ bitPairs[j] ][2];
-				pixels.data[address+3] = 255;
-
-				ppixels.data[address+0] = pallet[ bitPairs[j] ][0];
-				ppixels.data[address+1] = pallet[ bitPairs[j] ][1];
-				ppixels.data[address+2] = pallet[ bitPairs[j] ][2];
-				ppixels.data[address+3] = 127;
+				pixels.data[address+3] = 127;
 
 				o++;
 			}
@@ -179,42 +341,166 @@ export class Canvas extends View
 
 		for(const p in pixelsList)
 		{
-			context.putImageData(pixelsList[p], 0, p*8);
+			requestAnimationFrame(()=>context.putImageData(pixelsList[p], 0, p*8));
+		}
+	}
+
+	bytePerPixel(bytes)
+	{
+		console.log(bytes);
+
+		this.scrollDelta = 8;
+
+		const canvas  = this.tags.canvas;
+		const context = canvas.getContext('2d');
+		let i = 0;
+
+		const firstByte  = this.args.offset * this.args.width;
+
+		this.args.firstByte = firstByte.toString(16).padStart(4, '0');
+
+		const pixelsList = [];
+		const pixelCounts = []
+
+		for(const byte of bytes.slice(firstByte))
+		{
+			const renderRow  = Math.floor(i / this.args.width);
+			const renderBand = Math.floor(renderRow / 8);
+			const rowOffset  = Math.floor(this.args.offset / this.args.width);
+
+			i++;
+
+			if(i > (this.args.height * this.args.width) + rowOffset)
+			{
+				break;
+			}
+
+			if(!pixelsList[renderBand])
+			{
+				pixelsList[renderBand] = context.createImageData(
+					context.canvas.width, 8
+				);
+
+				pixelCounts[renderBand] = 0;
+			}
+
+			const pixels = pixelsList[renderBand];
+
+			pixels.data[ pixelCounts[renderBand]++ ] = 255;
+			pixels.data[ pixelCounts[renderBand]++ ] = 255;
+			pixels.data[ pixelCounts[renderBand]++ ] = 255;
+			pixels.data[ pixelCounts[renderBand]++ ] = byte;
+
+		}
+
+		for(const p in pixelsList)
+		{
+			requestAnimationFrame(()=>context.putImageData(pixelsList[p], 0, p*8));
 		}
 
 		// context.putImageData(pixels, 0, 0);
 	}
 
-	bytePerPixel(bytes)
+	bitPerPixel(bytes)
 	{
+		console.log(bytes);
+
+		this.scrollDelta = 8;
+
 		const canvas  = this.tags.canvas;
 		const context = canvas.getContext('2d');
-		const height  = Math.ceil(bytes.length / context.canvas.width);
-		const pixels  = context.createImageData(
-			context.canvas.width, context.canvas.height
-		);
-
 		let i = 0;
 		let o = 0;
 
-		for(const byte of bytes)
+		const firstByte = 8 * this.args.offset * this.args.width;
+
+		this.args.firstByte = firstByte.toString(16).padStart(4, '0');
+
+		const pixelsList = [];
+		const pixelCounts = []
+
+		bytes:for(const byte of bytes)
 		{
-			if(i++ < this.args.offset * this.args.width)
-			{
-				continue;
-			}
+			const bits = [
+				(byte & 0b10000000) >> 7
+				, (byte & 0b01000000) >> 6
+				, (byte & 0b00100000) >> 5
+				, (byte & 0b00010000) >> 4
+				, (byte & 0b00001000) >> 3
+				, (byte & 0b00000100) >> 2
+				, (byte & 0b00000010) >> 1
+				, (byte & 0b00000001) >> 0
+			];
 
-			if(i > (this.args.height * this.args.width) + (this.args.offset * this.args.width))
+			bits:for(const bit of bits)
 			{
-				break;
-			}
 
-			pixels.data[o++] = byte;
-			pixels.data[o++] = byte;
-			pixels.data[o++] = byte;
-			pixels.data[o++] = 255;
+				const renderRow  = Math.floor(o / this.args.width);
+				const renderBand = Math.floor(renderRow / 8);
+				const rowOffset  = Math.floor(this.args.offset / this.args.width);
+
+				if(!pixelsList[renderBand])
+				{
+					pixelsList[renderBand] = context.createImageData(
+						context.canvas.width, 8
+					);
+
+					pixelCounts[renderBand] = 0;
+				}
+
+				if(i < this.args.offset * this.args.width)
+				{
+					i++;
+					continue;
+				}
+
+				i++;
+
+				if(o > this.args.height * this.args.width)
+				{
+					break bytes;
+				}
+
+				o++;
+
+				const pixels = pixelsList[renderBand];
+
+				pixels.data[ pixelCounts[renderBand]++ ] = 255;
+				pixels.data[ pixelCounts[renderBand]++ ] = 255;
+				pixels.data[ pixelCounts[renderBand]++ ] = 255;
+				pixels.data[ pixelCounts[renderBand]++ ] = bit * 255;
+			}
 		}
 
-		context.putImageData(pixels, 0, 0);
+		for(const p in pixelsList)
+		{
+			requestAnimationFrame(()=>context.putImageData(pixelsList[p], 0, p*8));
+		}
+	}
+
+	toggleSettings()
+	{
+		this.args.showSettings = !this.args.showSettings;
+	}
+
+	zoomIn()
+	{
+		this.args.scale++;
+	}
+
+	zoomOut()
+	{
+		this.args.scale--;
+	}
+
+	run(event)
+	{
+		const rootPanel  = this.args.panel;
+		const input      = this;
+		const menuPanel  = new Panel({
+			title: 'Select a Processor', widget: new Menu({input, panel: rootPanel})
+		});
+
+		rootPanel.args.panels.push(menuPanel);
 	}
 }

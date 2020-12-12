@@ -1,0 +1,16 @@
+<div data-module = "canvas invert">
+	<div class = "column">
+		<label><p>input buffer: [[inputName]]</p></label>
+		<label class = "column">
+			<p>offset</p>
+			<input cv-bind = "offset">
+		</label>
+		<label class = "column">
+			<p>length</p>
+			<input cv-bind = "length">
+		</label>
+		<div class = "row right">
+			<button cv-on = "click:run(event)">invert</button>
+		</div>
+	</div>
+</div>

@@ -1,7 +1,8 @@
 import { View } from 'curvature/base/View';
 import { Tag  } from 'curvature/base/Tag';
 
-import { Canvas } from './canvas/Canvas';
+import { Panel } from './panel/Panel';
+import { Drop } from './file/Drop';
 
 const drawDots = (file, context) => {
 
@@ -33,51 +34,10 @@ const drawDots = (file, context) => {
 };
 
 document.addEventListener('DOMContentLoaded', function() {
-	const canvas = new Canvas;
+	const drop  = new Drop();
+	const panel = new Panel({type: 'root', widget: drop});
 
-	canvas.render(document.body);
-	// const canvas  = new Tag('<canvas>');
-	// const upload  = new Tag('<input type = "file">');
-	// const width   = new Tag('<input type = "number">');
-	// const scale   = new Tag('<input type = "number">');
+	drop.args.panel = panel;
 
-	// document.body.append('file');
-	// document.body.append(upload.node);
-	// document.body.append('width');
-	// document.body.append(width.node);
-	// document.body.append('scale');
-	// document.body.append(scale.node);
-	// document.body.append('map');
-	// document.body.append(canvas.node);
-
-	// const context = canvas.getContext('2d');
-
-	// let file = null;
-
-	// upload.addEventListener('input', event => {
-	// 	file = event.target.files[0];
-	// 	if(file)
-	// 	{
-	// 		drawDots(file, context);
-	// 	}
-	// });
-
-	// width.addEventListener('input', event => {
-	// 	if(file)
-	// 	{
-	// 		drawDots(file, context);
-	// 	}
-
-	// 	canvas.style.width = (event.target.value) + 'px';
-	// 	canvas.width = Number(event.target.value)
-	// });
-
-	// scale.addEventListener('input', event => {
-	// 	canvas.style({'--scale': event.target.value});
-	// });
-
-	// canvas.style.width = (width.value = 128) + 'px';
-	// canvas.width = Number(width.value = 128);
-
-	// scale.value = 3;
+	panel.render(document.body);
 });

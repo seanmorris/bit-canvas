@@ -1,0 +1,11 @@
+<div data-module = "panel" data-panel-type = "[[type]]" cv-ref = "panel">
+	<div class = "titlebar" cv-on = "mousedown:startFollow(event)" cv-if = "title">
+		<span class = "icon inline-icon"></span>
+		<span>[[title]]</span>
+		<div class = "right">
+			<div class = "icon inline-icon x-icon" cv-on = "click:close(event)"></div>
+		</div>
+	</div>
+	<div class = "widget">[[widget]]</div>
+	<div class = "panels" cv-each = "panels:panel">[[panel]]</div>
+</div>
