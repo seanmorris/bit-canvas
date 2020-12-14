@@ -1,0 +1,33 @@
+[data-module="file-list"] {
+	justify-content: flex-start;
+	align-items: stretch;
+	position: absolute;
+	flex-wrap: wrap;
+	display: flex;
+	width: 100%;
+	left: 0px;
+	bottom: 0px;
+}
+
+[data-module="file-list"] .file {
+	flex-direction: column;
+	align-items: center;
+	text-align: center;
+	padding: 0.5em;
+	display: flex;
+	max-width: 96px;
+	flex: 1;
+}
+
+[data-module="file-list"] .file img {
+	image-rendering: pixelated;
+	height: 64px;
+	width: 64px;
+	flex-shrink: 1;
+	flex-grow: 0;
+}
+
+[data-module="file-list"] {
+	color: black;
+	font-weight: bold;
+}
