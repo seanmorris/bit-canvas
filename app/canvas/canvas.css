@@ -24,7 +24,7 @@
 
 [data-module~=canvas] canvas {
 	align-self: center;
-	background: #152008;
+	background: #FFF;
 	image-rendering: pixelated;
 	--scale: 1;
 	width: calc(calc(var(--width) * var(--scale)) * 1px) !important;

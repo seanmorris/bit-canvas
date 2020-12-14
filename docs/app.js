@@ -549,15 +549,19 @@ var Bindable = /*#__PURE__*/function () {
             }
 
             var vv = Bindable.make(v);
-            object[SubBinding].set(original, vv.bindTo(function () {
-              for (var _len2 = arguments.length, subArgs = new Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
-                subArgs[_key2] = arguments[_key2];
-              }
 
-              return original.apply(void 0, args.concat(subArgs));
-            }, Object.assign({}, options, {
-              children: false
-            })));
+            if (Bindable.isBindable(vv)) {
+              object[SubBinding].set(original, vv.bindTo(function () {
+                for (var _len2 = arguments.length, subArgs = new Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
+                  subArgs[_key2] = arguments[_key2];
+                }
+
+                return original.apply(void 0, args.concat(subArgs));
+              }, Object.assign({}, options, {
+                children: false
+              })));
+            }
+
             original.apply(void 0, args);
           };
         }
@@ -3878,7 +3882,7 @@ var View = /*#__PURE__*/function (_Mixin$with) {
             tag.dispatchEvent(autoChangedEvent);
           } else if (_type !== 'file') {
             if (tag.tagName === 'SELECT') {
-              var selectOption = function selectOption(parentNode) {
+              var selectOption = function selectOption() {
                 for (var i = 0; i < tag.options.length; i++) {
                   var option = tag.options[i];
 
@@ -5609,7 +5613,178 @@ Object.defineProperty(PromiseMixin, 'Accept', {
 });
   })();
 });
-require.register("canvas/Canvas.js", function(exports, require, module) {
+
+require.register("pokemon-parser/BitArray.js", function(exports, require, module) {
+  require = __makeRelativeRequire(require, {}, "pokemon-parser");
+  (function() {
+    "use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.BitArray = void 0;
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
+
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
+
+var BitArray = /*#__PURE__*/function () {
+  function BitArray() {
+    var buffer = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : undefined;
+
+    _classCallCheck(this, BitArray);
+
+    if (buffer === undefined) {
+      buffer = [];
+    }
+
+    if (typeof buffer === 'number') {
+      buffer = Array.from(Array(buffer));
+    }
+
+    if (Array.isArray(buffer)) {
+      buffer = new Uint8Array(buffer);
+    }
+
+    if (buffer instanceof BitArray) {
+      buffer = buffer.buffer;
+    }
+
+    this.buffer = buffer;
+    this.done = false;
+    this.i = this.j = 0;
+  }
+
+  _createClass(BitArray, [{
+    key: "clone",
+    value: function clone() {
+      return new this.constructor(this);
+    }
+  }, {
+    key: "get",
+    value: function get(address) {
+      var byteAddress = Math.floor(address / 8);
+      var bitOffset = address % 8;
+      var getMask = 0x1 << bitOffset; // console.log(getMask.toString(2), this.buffer[ byteAddress ].toString(2));
+
+      return (getMask & this.buffer[byteAddress]) >> bitOffset;
+    }
+  }, {
+    key: "set",
+    value: function set(address, value) {
+      var byteAddress = Math.floor(address / 8);
+      var bitOffset = address % 8;
+      var setMask = value ? 0x1 << bitOffset : ~(0x1 << bitOffset);
+
+      if (value) {
+        this.buffer[byteAddress] |= setMask;
+      } else {
+        this.buffer[byteAddress] &= setMask;
+      }
+    }
+  }, {
+    key: "next",
+    value: function next() {
+      var x = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 1;
+      var result = 0;
+      var count = x;
+      var _byte = this.buffer[this.i];
+
+      while (x-- > 0) {
+        var bit = _byte >> 7 - this.j & 0x1; // console.log('Got, %d from %s.%d', bit, byte.toString(2).padStart(8,'0'), this.j);
+
+        this.j++;
+
+        if (this.j > 7) {
+          this.j = 0;
+          _byte = this.buffer[++this.i];
+        }
+
+        if (this.i >= this.buffer.length) {
+          this.done = true;
+        }
+
+        result <<= 1;
+        result |= bit;
+      }
+
+      return result;
+    }
+  }, {
+    key: "length",
+    get: function get() {
+      return this.buffer.length * 8;
+    }
+  }]);
+
+  return BitArray;
+}();
+
+exports.BitArray = BitArray;
+  })();
+});
+require.register("Processor.js", function(exports, require, module) {
+"use strict";
+
+function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.Processor = void 0;
+
+var _View2 = require("curvature/base/View");
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function"); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, writable: true, configurable: true } }); if (superClass) _setPrototypeOf(subClass, superClass); }
+
+function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || function _setPrototypeOf(o, p) { o.__proto__ = p; return o; }; return _setPrototypeOf(o, p); }
+
+function _createSuper(Derived) { var hasNativeReflectConstruct = _isNativeReflectConstruct(); return function _createSuperInternal() { var Super = _getPrototypeOf(Derived), result; if (hasNativeReflectConstruct) { var NewTarget = _getPrototypeOf(this).constructor; result = Reflect.construct(Super, arguments, NewTarget); } else { result = Super.apply(this, arguments); } return _possibleConstructorReturn(this, result); }; }
+
+function _possibleConstructorReturn(self, call) { if (call && (_typeof(call) === "object" || typeof call === "function")) { return call; } return _assertThisInitialized(self); }
+
+function _assertThisInitialized(self) { if (self === void 0) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return self; }
+
+function _isNativeReflectConstruct() { if (typeof Reflect === "undefined" || !Reflect.construct) return false; if (Reflect.construct.sham) return false; if (typeof Proxy === "function") return true; try { Date.prototype.toString.call(Reflect.construct(Date, [], function () {})); return true; } catch (e) { return false; } }
+
+function _getPrototypeOf(o) { _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf : function _getPrototypeOf(o) { return o.__proto__ || Object.getPrototypeOf(o); }; return _getPrototypeOf(o); }
+
+var Processor = /*#__PURE__*/function (_View) {
+  _inherits(Processor, _View);
+
+  var _super = _createSuper(Processor);
+
+  function Processor(args, parent) {
+    var _this;
+
+    _classCallCheck(this, Processor);
+
+    _this = _super.call(this, args, parent);
+
+    _this.args.bindTo('input', function (v) {
+      if (!v) {
+        return;
+      }
+
+      _this.args.inputName = v.args.input ? v.args.input.name : v.args.title;
+      _this.args.offset = Number(v.args.firstByte);
+      _this.args.length = Number(v.args.buffer.length) - _this.args.offset;
+    });
+
+    return _this;
+  }
+
+  return Processor;
+}(_View2.View);
+
+exports.Processor = Processor;
+});
+
+;require.register("canvas/Canvas.js", function(exports, require, module) {
 "use strict";
 
 function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
@@ -5669,12 +5844,12 @@ var Canvas = /*#__PURE__*/function (_View) {
 
     _defineProperty(_assertThisInitialized(_this), "template", require('./canvas.html'));
 
-    _this.args.width = 128;
-    _this.args.height = 128;
+    _this.args.height = _this.args.height || 128;
+    _this.args.width = _this.args.width || 128;
+    _this.args.scale = _this.args.scale || 2;
     _this.args.offset = 0;
-    _this.args.scale = 2;
     _this.scrollDelta = 1;
-    _this.args.decoder = 'gameboy';
+    _this.args.decoder = args.decoder || 'gameboy';
     _this.args.showSettings = false;
     _this.args.buffer = _this.args.buffer || false;
     _this.args.firstByte = '0000';
@@ -5692,8 +5867,6 @@ var Canvas = /*#__PURE__*/function (_View) {
         '--height': this.args.height
       };
       this.args.bindTo('offset', function (v, k) {
-        _this2.args.offset = v;
-
         if (!_this2.args.buffer || !_this2.tags.canvas) {
           return;
         }
@@ -5712,32 +5885,40 @@ var Canvas = /*#__PURE__*/function (_View) {
         if (_this2.args.buffer) {
           _this2.drawDots(_this2.args.buffer);
         }
+      }, {
+        wait: 0
       });
       this.args.bindTo('width', function (v, k) {
+        v = Number(v);
+
         if (_this2.tags.canvas) {
           canvasStyle['--width'] = v;
+          _this2.tags.canvas.width = v;
 
           _this2.tags.canvas.style(canvasStyle);
-
-          _this2.tags.canvas.width = v;
         }
 
         if (_this2.args.buffer) {
           _this2.drawDots(_this2.args.buffer);
         }
+      }, {
+        wait: 0
       });
       this.args.bindTo('height', function (v, k) {
+        v = Number(v);
+
         if (_this2.tags.canvas) {
           canvasStyle['--height'] = v;
+          _this2.tags.canvas.height = v;
 
           _this2.tags.canvas.style(canvasStyle);
-
-          _this2.tags.canvas.height = v;
         }
 
         if (_this2.args.buffer) {
           _this2.drawDots(_this2.args.buffer);
         }
+      }, {
+        wait: 0
       });
       this.args.bindTo('input', function (v) {
         if (!v) {
@@ -5783,7 +5964,13 @@ var Canvas = /*#__PURE__*/function (_View) {
     }
   }, {
     key: "drawDots",
-    value: function drawDots(bytes) {
+    value: function drawDots() {
+      var bytes = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : undefined;
+
+      if (bytes === undefined) {
+        bytes = this.args.buffer;
+      }
+
       var canvas = this.tags.canvas;
       var context = canvas.getContext('2d');
       requestAnimationFrame(function () {
@@ -5809,57 +5996,26 @@ var Canvas = /*#__PURE__*/function (_View) {
       }
     }
   }, {
-    key: "nin1bit",
-    value: function nin1bit(bytes) {
+    key: "nin1bitCols",
+    value: function nin1bitCols(bytes) {
       this.scrollDelta = 1;
-      var pallet = [[0xFF, 0xFF, 0xFF], [0x44, 0x44, 0x44], [0xCC, 0xCC, 0xCC], [0x00, 0x00, 0x00]];
+      var tilesize = 8;
       var canvas = this.tags.canvas;
       var context = canvas.getContext('2d');
-      var o = 0;
-      var maxTilesX = Math.floor(this.args.width / 8);
-      var height = Math.ceil(this.args.height / 8) * 8;
-      var offset = this.args.offset;
       var width = this.args.width;
+      var height = Math.floor(this.args.height / width);
+      var o = 0;
       var pixelsList = [];
-      this.args.firstByte = (offset * maxTilesX * 8).toString(16).padStart(4, '0');
 
       for (var i = 0; i < bytes.length; i += 1) {
         var _byte = bytes[i];
-
-        if (o < offset * maxTilesX * 8) {
-          o++;
-          continue;
-        }
-
-        if (o > height * width + offset * (maxTilesX * 8)) {
-          break;
-        }
-
         var bits = [(_byte & 128) >> 7, (_byte & 64) >> 6, (_byte & 32) >> 5, (_byte & 16) >> 4, (_byte & 8) >> 3, (_byte & 4) >> 2, (_byte & 2) >> 1, (_byte & 1) >> 0];
 
-        for (var j in bits) {
-          var bit = bits[j];
-          var ii = o - offset * maxTilesX * 8;
-          var currentTile = Math.floor(ii / 64);
-          var currentTileX = currentTile % maxTilesX;
-          var currentTileY = Math.floor(currentTile / maxTilesX);
-          var fromTile = ii % 64;
-          var fromTileY = Math.floor(fromTile / 8);
-          var fromTileX = fromTile % 8;
+        if (!pixelsList[currentTileY]) {
+          pixelsList[currentTileY] = context.createImageData(maxTilesX * 8, 8);
+        }
 
-          if (!pixelsList[currentTileY]) {
-            pixelsList[currentTileY] = context.createImageData(maxTilesX * 8, 8);
-          }
-
-          var pixels = pixelsList[currentTileY];
-          var fromOriginX = currentTileX * 8 + fromTileX;
-          var fromOriginY = fromTileY;
-          var address = 4 * (maxTilesX * 8 * fromOriginY + fromOriginX);
-          pixels.data[address + 0] = 255;
-          pixels.data[address + 1] = 255;
-          pixels.data[address + 2] = 255;
-          pixels.data[address + 3] = bits[j] * 196;
-          o++;
+        for (var j in bits) {// const
         }
       }
 
@@ -5871,6 +6027,61 @@ var Canvas = /*#__PURE__*/function (_View) {
 
       for (var p in pixelsList) {
         _loop(p);
+      }
+    }
+  }, {
+    key: "nin1bit",
+    value: function nin1bit(bytes) {
+      this.scrollDelta = 1;
+      var tilesize = 2;
+      var canvas = this.tags.canvas;
+      var context = canvas.getContext('2d');
+      var maxTilesX = Math.floor(this.args.width / tilesize);
+      var offset = this.args.offset;
+      var width = this.args.width;
+      var pixelsList = [];
+      this.args.firstByte = offset * width;
+      var o = 0;
+
+      for (var i = 0; i < bytes.length; i += 1) {
+        var _byte2 = bytes[i];
+        var bits = [(_byte2 & 1) >> 0, (_byte2 & 2) >> 1, (_byte2 & 4) >> 2, (_byte2 & 8) >> 3, (_byte2 & 16) >> 4, (_byte2 & 32) >> 5, (_byte2 & 64) >> 6, (_byte2 & 128) >> 7];
+
+        for (var j in bits) {
+          var bit = bits[j];
+          var currentTile = Math.floor(o / Math.pow(tilesize, 2));
+          var currentTileX = currentTile % maxTilesX;
+
+          var _currentTileY = Math.floor(currentTile / maxTilesX);
+
+          var tileOffset = o % Math.pow(tilesize, 2);
+          var tileOffsetX = Math.floor(tileOffset / tilesize);
+          var tileOffsetY = tileOffset % tilesize;
+
+          if (!pixelsList[_currentTileY]) {
+            pixelsList[_currentTileY] = context.createImageData(width, tilesize);
+          }
+
+          var pixels = pixelsList[_currentTileY];
+          var fromOriginX = currentTileX * tilesize + tileOffsetX;
+          var fromOriginY = tileOffsetY;
+          var address = 4 * (width * fromOriginY + fromOriginX);
+          pixels.data[address + 0] = bits[j] ? 255 : 0;
+          pixels.data[address + 1] = bits[j] ? 255 : 0;
+          pixels.data[address + 2] = bits[j] ? 255 : 0;
+          pixels.data[address + 3] = bits[j] ? 255 : 255;
+          o++;
+        }
+      }
+
+      var _loop2 = function _loop2(p) {
+        requestAnimationFrame(function () {
+          return context.putImageData(pixelsList[p], 0, p * tilesize);
+        });
+      };
+
+      for (var p in pixelsList) {
+        _loop2(p);
       }
     }
   }, {
@@ -5886,7 +6097,7 @@ var Canvas = /*#__PURE__*/function (_View) {
       var offset = this.args.offset;
       var width = this.args.width;
       var pixelsList = [];
-      this.args.firstByte = (offset * maxTilesX * 8).toString(16).padStart(4, '0');
+      this.args.firstByte = offset * maxTilesX * 16;
 
       for (var i = 0; i < bytes.length; i += 2) {
         var byteA = bytes[i];
@@ -5907,56 +6118,56 @@ var Canvas = /*#__PURE__*/function (_View) {
           var ii = o - offset * maxTilesX * 8;
           var currentTile = Math.floor(ii / 64);
           var currentTileX = currentTile % maxTilesX;
-          var currentTileY = Math.floor(currentTile / maxTilesX);
+
+          var _currentTileY2 = Math.floor(currentTile / maxTilesX);
+
           var fromTile = ii % 64;
           var fromTileY = Math.floor(fromTile / 8);
           var fromTileX = fromTile % 8;
-
-          if (!pixelsList[currentTileY]) {
-            pixelsList[currentTileY] = context.createImageData(maxTilesX * 8, 8);
-          }
-
-          var pixels = pixelsList[currentTileY];
           var fromOriginX = currentTileX * 8 + fromTileX;
           var fromOriginY = fromTileY;
+
+          if (!pixelsList[_currentTileY2]) {
+            pixelsList[_currentTileY2] = context.createImageData(maxTilesX * 8, 8);
+          }
+
+          var pixels = pixelsList[_currentTileY2];
           var address = 4 * (maxTilesX * 8 * fromOriginY + fromOriginX);
           pixels.data[address + 0] = pallet[bitPairs[j]][0];
           pixels.data[address + 1] = pallet[bitPairs[j]][1];
           pixels.data[address + 2] = pallet[bitPairs[j]][2];
-          pixels.data[address + 3] = 127;
+          pixels.data[address + 3] = 255;
           o++;
         }
       }
 
-      var _loop2 = function _loop2(p) {
+      var _loop3 = function _loop3(p) {
         requestAnimationFrame(function () {
           return context.putImageData(pixelsList[p], 0, p * 8);
         });
       };
 
       for (var p in pixelsList) {
-        _loop2(p);
+        _loop3(p);
       }
     }
   }, {
     key: "bytePerPixel",
     value: function bytePerPixel(bytes) {
-      console.log(bytes);
       this.scrollDelta = 8;
       var canvas = this.tags.canvas;
       var context = canvas.getContext('2d');
       var i = 0;
-      var firstByte = this.args.offset * this.args.width;
-      this.args.firstByte = firstByte.toString(16).padStart(4, '0');
+      this.args.firstByte = this.args.offset * this.args.width;
       var pixelsList = [];
       var pixelCounts = [];
 
-      var _iterator = _createForOfIteratorHelper(bytes.slice(firstByte)),
+      var _iterator = _createForOfIteratorHelper(bytes.slice(this.args.firstByte)),
           _step;
 
       try {
         for (_iterator.s(); !(_step = _iterator.n()).done;) {
-          var _byte2 = _step.value;
+          var _byte3 = _step.value;
           var renderRow = Math.floor(i / this.args.width);
           var renderBand = Math.floor(renderRow / 8);
           var rowOffset = Math.floor(this.args.offset / this.args.width);
@@ -5972,10 +6183,10 @@ var Canvas = /*#__PURE__*/function (_View) {
           }
 
           var pixels = pixelsList[renderBand];
+          pixels.data[pixelCounts[renderBand]++] = _byte3;
+          pixels.data[pixelCounts[renderBand]++] = _byte3;
+          pixels.data[pixelCounts[renderBand]++] = _byte3;
           pixels.data[pixelCounts[renderBand]++] = 255;
-          pixels.data[pixelCounts[renderBand]++] = 255;
-          pixels.data[pixelCounts[renderBand]++] = 255;
-          pixels.data[pixelCounts[renderBand]++] = _byte2;
         }
       } catch (err) {
         _iterator.e(err);
@@ -5983,38 +6194,36 @@ var Canvas = /*#__PURE__*/function (_View) {
         _iterator.f();
       }
 
-      var _loop3 = function _loop3(p) {
+      var _loop4 = function _loop4(p) {
         requestAnimationFrame(function () {
           return context.putImageData(pixelsList[p], 0, p * 8);
         });
       };
 
       for (var p in pixelsList) {
-        _loop3(p);
+        _loop4(p);
       } // context.putImageData(pixels, 0, 0);
 
     }
   }, {
     key: "bitPerPixel",
     value: function bitPerPixel(bytes) {
-      console.log(bytes);
       this.scrollDelta = 8;
       var canvas = this.tags.canvas;
       var context = canvas.getContext('2d');
       var i = 0;
       var o = 0;
-      var firstByte = 8 * this.args.offset * this.args.width;
-      this.args.firstByte = firstByte.toString(16).padStart(4, '0');
-      var pixelsList = [];
+      this.args.firstByte = 8 * this.args.offset * this.args.width;
       var pixelCounts = [];
+      var pixelsList = [];
 
       var _iterator2 = _createForOfIteratorHelper(bytes),
           _step2;
 
       try {
         bytes: for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
-          var _byte3 = _step2.value;
-          var bits = [(_byte3 & 128) >> 7, (_byte3 & 64) >> 6, (_byte3 & 32) >> 5, (_byte3 & 16) >> 4, (_byte3 & 8) >> 3, (_byte3 & 4) >> 2, (_byte3 & 2) >> 1, (_byte3 & 1) >> 0];
+          var _byte4 = _step2.value;
+          var bits = [(_byte4 & 128) >> 7, (_byte4 & 64) >> 6, (_byte4 & 32) >> 5, (_byte4 & 16) >> 4, (_byte4 & 8) >> 3, (_byte4 & 4) >> 2, (_byte4 & 2) >> 1, (_byte4 & 1) >> 0];
 
           bits: for (var _i = 0, _bits = bits; _i < _bits.length; _i++) {
             var bit = _bits[_i];
@@ -6040,10 +6249,10 @@ var Canvas = /*#__PURE__*/function (_View) {
 
             o++;
             var pixels = pixelsList[renderBand];
-            pixels.data[pixelCounts[renderBand]++] = 255;
-            pixels.data[pixelCounts[renderBand]++] = 255;
-            pixels.data[pixelCounts[renderBand]++] = 255;
             pixels.data[pixelCounts[renderBand]++] = bit * 255;
+            pixels.data[pixelCounts[renderBand]++] = bit * 255;
+            pixels.data[pixelCounts[renderBand]++] = bit * 255;
+            pixels.data[pixelCounts[renderBand]++] = 255;
           }
         }
       } catch (err) {
@@ -6052,14 +6261,14 @@ var Canvas = /*#__PURE__*/function (_View) {
         _iterator2.f();
       }
 
-      var _loop4 = function _loop4(p) {
+      var _loop5 = function _loop5(p) {
         requestAnimationFrame(function () {
           return context.putImageData(pixelsList[p], 0, p * 8);
         });
       };
 
       for (var p in pixelsList) {
-        _loop4(p);
+        _loop5(p);
       }
     }
   }, {
@@ -6087,9 +6296,16 @@ var Canvas = /*#__PURE__*/function (_View) {
         widget: new _Menu.Menu({
           input: input,
           panel: rootPanel
-        })
+        }),
+        left: event.clientX + 'px',
+        top: event.clientY + 'px'
       });
       rootPanel.args.panels.push(menuPanel);
+    }
+  }, {
+    key: "hex",
+    value: function hex(x) {
+      return Number(x).toString(16).padStart(4, '0');
     }
   }]);
 
@@ -6100,7 +6316,7 @@ exports.Canvas = Canvas;
 });
 
 ;require.register("canvas/canvas.html", function(exports, require, module) {
-module.exports = "<div data-module = \"canvas\">\n\n\t<label cv-if = \"buffer\">\n\t\t<div>\n\t\t\t<div class = \"icon inline-icon gear-icon\" cv-on = \"click:toggleSettings(event)\"></div>\n\t\t\t<div class = \"icon inline-icon save-icon\"cv-on = \"click:save(event)\"></div>\n\t\t\t<div class = \"icon inline-icon run-icon\" cv-on = \"click:run(event)\"></div>\n\t\t\t<!-- <div class = \"icon inline-icon folder-icon\"></div> -->\n\t\t</div>\n\t</label>\n\n\t<span cv-if = \"showSettings\">\n\n\t\t<label cv-if = \"buffer\">\n\t\t\t<p>width</p>\n\t\t\t<input cv-bind = \"width\" type = \"number\" min = \"0\">\n\t\t</label>\n\n\t\t<label cv-if = \"buffer\">\n\t\t\t<p>height</p>\n\t\t\t<input cv-bind = \"height\" type = \"number\" min = \"0\">\n\t\t</label>\n\n\t\t<label cv-if = \"buffer\">\n\t\t\t<p>scale</p>\n\t\t\t<input cv-bind = \"scale\" type = \"number\" min = \"1\">\n\t\t</label>\n\n\t\t<label cv-if = \"buffer\">\n\t\t\t<p>row</p>\n\t\t\t<input cv-bind = \"offset\" type = \"number\" min = \"0\">\n\t\t</label>\n\t</span>\n\n\t<label cv-if = \"!buffer\">\n\t\t<input type = \"file\" cv-bind = \"input\">\n\t</label>\n\n\t<label cv-if = \"buffer\">\n\t\t<p>encoding</p>\n\t\t<select cv-bind = \"decoder\">\n\t\t\t<optgroup label = \"streams\">\n\t\t\t\t<!-- <option value = \"\">32 bit color (R,G,B,A...)*</option> -->\n\t\t\t\t<!-- <option value = \"\">24 bit color (R,G,B...)*</option> -->\n\t\t\t\t<!-- <option value = \"\">16 bit greyscale*</option> -->\n\t\t\t\t<option value = \"bytes\">8 bit greyscale</option>\n\t\t\t\t<!-- <option value = \"\">4 bit greyscale*</option> -->\n\t\t\t\t<!-- <option value = \"\">2 bit greyscale*</option> -->\n\t\t\t\t<option value = \"bits\">1 bit black & white</option>\n\t\t\t</optgroup>\n\t\t\t<optgroup label = \"tiles\">\n\t\t\t\t<option value = \"gameboy\">2 bit gameboy (2bpp)</option>\n\t\t\t\t<option value = \"gameboy-1bit\">1 bit gameboy (1bpp)</option>\n\t\t\t</optgroup>\n\t\t</select>\n\t</label>\n\n\t<label cv-if = \"buffer\">\n\t\t<p>buffer</p>\n\t\t<div class = \"canvas-window\">\n\t\t\t<canvas cv-ref = \"canvas\" cv-on = \"wheel(event)\"></canvas>\n\t\t\t<div class = \"row\">\n\t\t\t\t<div><code>0x[[firstByte]]</code></div>\n\t\t\t\t<div class = \"right\">\n\t\t\t\t\t<div class = \"icon inline-icon zoom-out-icon\" cv-on = \"click:zoomOut(event)\"></div>\n\t\t\t\t\t<div class = \"icon inline-icon zoom-in-icon\" cv-on = \"click:zoomIn(event)\"></div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</div>\n\t</label>\n</div>\n"
+module.exports = "<div data-module = \"canvas [[module]]\">\n\n\t<label cv-if = \"buffer\">\n\t\t<div>\n\t\t\t<div class = \"icon inline-icon gear-icon\" cv-on = \"click:toggleSettings(event)\"></div>\n\t\t\t<div class = \"icon inline-icon save-icon\"cv-on = \"click:save(event)\"></div>\n\t\t\t<div class = \"icon inline-icon run-icon\" cv-on = \"click:run(event)\"></div>\n\t\t\t<!-- <div class = \"icon inline-icon folder-icon\"></div> -->\n\t\t</div>\n\t</label>\n\n\t<span cv-if = \"showSettings\">\n\n\t\t<label cv-if = \"buffer\">\n\t\t\t<p>width</p>\n\t\t\t<input cv-bind = \"width\" type = \"number\" min = \"0\">\n\t\t</label>\n\n\t\t<label cv-if = \"buffer\">\n\t\t\t<p>height</p>\n\t\t\t<input cv-bind = \"height\" type = \"number\" min = \"0\">\n\t\t</label>\n\n\t\t<label cv-if = \"buffer\">\n\t\t\t<p>scale</p>\n\t\t\t<input cv-bind = \"scale\" type = \"number\" min = \"1\">\n\t\t</label>\n\n\t\t<label cv-if = \"buffer\">\n\t\t\t<p>row</p>\n\t\t\t<input cv-bind = \"offset\" type = \"number\" min = \"0\">\n\t\t</label>\n\t</span>\n\n\t<label cv-if = \"!buffer\">\n\t\t<input type = \"file\" cv-bind = \"input\">\n\t</label>\n\n\t<label cv-if = \"buffer\">\n\t\t<p>encoding</p>\n\t\t<select cv-bind = \"decoder\">\n\t\t\t<optgroup label = \"streams\">\n\t\t\t\t<!-- <option value = \"\">32 bit color (R,G,B,A...)*</option> -->\n\t\t\t\t<!-- <option value = \"\">24 bit color (R,G,B...)*</option> -->\n\t\t\t\t<!-- <option value = \"\">16 bit greyscale*</option> -->\n\t\t\t\t<option value = \"bytes\">8 bit greyscale</option>\n\t\t\t\t<!-- <option value = \"\">4 bit greyscale*</option> -->\n\t\t\t\t<!-- <option value = \"\">2 bit greyscale*</option> -->\n\t\t\t\t<option value = \"bits\">1 bit black & white</option>\n\t\t\t</optgroup>\n\t\t\t<optgroup label = \"tiles\">\n\t\t\t\t<option value = \"gameboy\">2 bit gameboy (2bpp)</option>\n\t\t\t\t<option value = \"gameboy-1bit\">1 bit gameboy (1bpp)</option>\n\t\t\t</optgroup>\n\t\t</select>\n\t</label>\n\n\t<label cv-if = \"buffer\">\n\t\t<p>buffer</p>\n\t\t<div class = \"canvas-window\">\n\t\t\t<canvas cv-ref = \"canvas\" cv-on = \"wheel(event)\"></canvas>\n\t\t\t<div class = \"row\">\n\t\t\t\t<div><code>0x[[firstByte|hex]]</code></div>\n\t\t\t\t<div class = \"right\">\n\t\t\t\t\t<div class = \"icon inline-icon zoom-out-icon\" cv-on = \"click:zoomOut(event)\"></div>\n\t\t\t\t\t<div class = \"icon inline-icon zoom-in-icon\" cv-on = \"click:zoomIn(event)\"></div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</div>\n\t</label>\n</div>\n"
 });
 
 ;require.register("file/Drop.js", function(exports, require, module) {
@@ -6238,7 +6454,6 @@ var Icon = /*#__PURE__*/function (_View) {
 
     _defineProperty(_assertThisInitialized(_this), "template", require('./icon.html'));
 
-    console.log(_this.template);
     return _this;
   }
 
@@ -6332,6 +6547,10 @@ var _Panel = require("../panel/Panel");
 
 var _Invert = require("../processor/Invert");
 
+var _Deinterlace = require("../processor/Deinterlace");
+
+var _RLE = require("../processor/RLE");
+
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
@@ -6369,17 +6588,18 @@ var Menu = /*#__PURE__*/function (_View) {
     _defineProperty(_assertThisInitialized(_this), "template", require('./menu.html'));
 
     _this.args.links = {
-      Invert: _Invert.Invert
+      Invert: _Invert.Invert,
+      RLE: _RLE.RLE,
+      Deinterlace: _Deinterlace.Deinterlace
     };
     return _this;
   }
 
   _createClass(Menu, [{
     key: "click",
-    value: function click(event, processor) {
+    value: function click(event, processor, title) {
       var rootPanel = this.args.panel;
       var input = this.args.input;
-      var title = 'Invert';
       var widget = new processor({
         input: input,
         panel: rootPanel
@@ -6389,8 +6609,6 @@ var Menu = /*#__PURE__*/function (_View) {
         widget: widget
       });
       rootPanel.args.panels.push(panel);
-      console.log(this);
-      this.remove();
     }
   }]);
 
@@ -6401,7 +6619,7 @@ exports.Menu = Menu;
 });
 
 ;require.register("menu/menu.html", function(exports, require, module) {
-module.exports = "<div data-module = \"menu\" cv-each = \"links:processor:title\">\n\t<div><a cv-link = \"/process/[[title]]\" cv-on = \"click(event, processor)\">[[title]]</a>\n</div>\n"
+module.exports = "<div data-module = \"menu\" cv-each = \"links:processor:title\">\n\t<div><a cv-link = \"/process/[[title]]\" cv-on = \"click(event, processor, title)\">[[title]]</a>\n</div>\n"
 });
 
 ;require.register("panel/Panel.js", function(exports, require, module) {
@@ -6528,7 +6746,7 @@ exports.Panel = Panel;
 module.exports = "<div data-module = \"panel\" data-panel-type = \"[[type]]\" cv-ref = \"panel\">\n\t<div class = \"titlebar\" cv-on = \"mousedown:startFollow(event)\" cv-if = \"title\">\n\t\t<span class = \"icon inline-icon\"></span>\n\t\t<span>[[title]]</span>\n\t\t<div class = \"right\">\n\t\t\t<div class = \"icon inline-icon x-icon\" cv-on = \"click:close(event)\"></div>\n\t\t</div>\n\t</div>\n\t<div class = \"widget\">[[widget]]</div>\n\t<div class = \"panels\" cv-each = \"panels:panel\">[[panel]]</div>\n</div>\n"
 });
 
-;require.register("processor/Invert.js", function(exports, require, module) {
+;require.register("processor/Deinterlace.js", function(exports, require, module) {
 "use strict";
 
 function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
@@ -6536,13 +6754,17 @@ function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "functi
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.Invert = void 0;
+exports.Deinterlace = void 0;
 
-var _View2 = require("curvature/base/View");
+var _View = require("curvature/base/View");
 
 var _Panel = require("../panel/Panel");
 
 var _Canvas = require("../canvas/Canvas");
+
+var _BitArray = require("pokemon-parser/BitArray");
+
+var _Processor2 = require("../Processor");
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -6566,8 +6788,118 @@ function _getPrototypeOf(o) { _getPrototypeOf = Object.setPrototypeOf ? Object.g
 
 function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
-var Invert = /*#__PURE__*/function (_View) {
-  _inherits(Invert, _View);
+var Deinterlace = /*#__PURE__*/function (_Processor) {
+  _inherits(Deinterlace, _Processor);
+
+  var _super = _createSuper(Deinterlace);
+
+  function Deinterlace(args, parent) {
+    var _this;
+
+    _classCallCheck(this, Deinterlace);
+
+    _this = _super.call(this, args, parent);
+
+    _defineProperty(_assertThisInitialized(_this), "template", require('./deinterlace.html'));
+
+    return _this;
+  }
+
+  _createClass(Deinterlace, [{
+    key: "run",
+    value: function run() {
+      var rootPanel = this.args.panel;
+      var offset = Number(this.args.offset);
+      var length = Math.pow(56, 2);
+      var input = new _BitArray.BitArray(this.args.input.args.buffer);
+      var output = new Uint8Array(length);
+
+      for (var i = 0; i < input.length / 2; i++) {
+        var b1 = input.get(this.pixelToRowPixel(i));
+        var b2 = input.get(this.pixelToRowPixel(i) + Math.pow(56, 2));
+        var b = b1 << 1 | b2;
+        var pallet = [255, 64, 128, 0];
+        output[i] = pallet[b];
+      }
+
+      var title = 'Deinterlaced ' + this.args.inputName;
+      var widget = new _Canvas.Canvas({
+        buffer: output,
+        panel: rootPanel,
+        title: title,
+        width: 56,
+        height: 56,
+        scale: 4,
+        decoder: 'bytes'
+      });
+      widget.panel = rootPanel;
+      rootPanel.args.panels.push(new _Panel.Panel({
+        title: title,
+        widget: widget
+      }));
+    }
+  }, {
+    key: "pixelToRowPixel",
+    value: function pixelToRowPixel(pixel) {
+      var width = 56;
+      var pEven = pixel % 2 === 0;
+      var xOff = Math.floor(pixel / width);
+      var xEven = xOff % 2 == 0;
+      var yOff = pixel % width;
+      var result = xOff * 2 + yOff * width + (pEven ? 0 : -55); // console.log(pixel, xOff, yOff, result);
+
+      return result;
+    }
+  }]);
+
+  return Deinterlace;
+}(_Processor2.Processor);
+
+exports.Deinterlace = Deinterlace;
+});
+
+;require.register("processor/Invert.js", function(exports, require, module) {
+"use strict";
+
+function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.Invert = void 0;
+
+var _View = require("curvature/base/View");
+
+var _Panel = require("../panel/Panel");
+
+var _Canvas = require("../canvas/Canvas");
+
+var _Processor2 = require("../Processor");
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
+
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function"); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, writable: true, configurable: true } }); if (superClass) _setPrototypeOf(subClass, superClass); }
+
+function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || function _setPrototypeOf(o, p) { o.__proto__ = p; return o; }; return _setPrototypeOf(o, p); }
+
+function _createSuper(Derived) { var hasNativeReflectConstruct = _isNativeReflectConstruct(); return function _createSuperInternal() { var Super = _getPrototypeOf(Derived), result; if (hasNativeReflectConstruct) { var NewTarget = _getPrototypeOf(this).constructor; result = Reflect.construct(Super, arguments, NewTarget); } else { result = Super.apply(this, arguments); } return _possibleConstructorReturn(this, result); }; }
+
+function _possibleConstructorReturn(self, call) { if (call && (_typeof(call) === "object" || typeof call === "function")) { return call; } return _assertThisInitialized(self); }
+
+function _assertThisInitialized(self) { if (self === void 0) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return self; }
+
+function _isNativeReflectConstruct() { if (typeof Reflect === "undefined" || !Reflect.construct) return false; if (Reflect.construct.sham) return false; if (typeof Proxy === "function") return true; try { Date.prototype.toString.call(Reflect.construct(Date, [], function () {})); return true; } catch (e) { return false; } }
+
+function _getPrototypeOf(o) { _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf : function _getPrototypeOf(o) { return o.__proto__ || Object.getPrototypeOf(o); }; return _getPrototypeOf(o); }
+
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
+var Invert = /*#__PURE__*/function (_Processor) {
+  _inherits(Invert, _Processor);
 
   var _super = _createSuper(Invert);
 
@@ -6580,16 +6912,6 @@ var Invert = /*#__PURE__*/function (_View) {
 
     _defineProperty(_assertThisInitialized(_this), "template", require('./invert.html'));
 
-    _this.args.bindTo('input', function (v) {
-      if (!v) {
-        return;
-      }
-
-      _this.args.inputName = v.args.input ? v.args.input.name : v.args.title;
-      _this.args.offset = v.args.offset;
-      _this.args.length = v.args.buffer.length;
-    });
-
     return _this;
   }
 
@@ -6597,13 +6919,13 @@ var Invert = /*#__PURE__*/function (_View) {
     key: "run",
     value: function run() {
       var rootPanel = this.args.panel;
-      var offset = Number(this.args.offset) || 0;
-      var length = Number(this.args.length) || 0;
+      var offset = Number(this.args.offset);
+      var length = Number(this.args.length);
       var input = this.args.input.args.buffer;
       var output = new Uint8Array(length);
 
-      for (var i = 0; i < input.length; i++) {
-        output[i] = input[i] ^ 255;
+      for (var i = 0; i < length; i++) {
+        output[i] = input[i + offset] ^ 255;
       }
 
       var title = 'Inverted ' + this.args.inputName;
@@ -6621,13 +6943,388 @@ var Invert = /*#__PURE__*/function (_View) {
   }]);
 
   return Invert;
-}(_View2.View);
+}(_Processor2.Processor);
 
 exports.Invert = Invert;
 });
 
+;require.register("processor/RLE.js", function(exports, require, module) {
+"use strict";
+
+function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.RLE = void 0;
+
+var _View = require("curvature/base/View");
+
+var _Panel = require("../panel/Panel");
+
+var _Canvas = require("../canvas/Canvas");
+
+var _Processor2 = require("../Processor");
+
+var _BitArray = require("pokemon-parser/BitArray");
+
+function _toConsumableArray(arr) { return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _unsupportedIterableToArray(arr) || _nonIterableSpread(); }
+
+function _nonIterableSpread() { throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
+
+function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
+
+function _iterableToArray(iter) { if (typeof Symbol !== "undefined" && Symbol.iterator in Object(iter)) return Array.from(iter); }
+
+function _arrayWithoutHoles(arr) { if (Array.isArray(arr)) return _arrayLikeToArray(arr); }
+
+function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
+
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function"); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, writable: true, configurable: true } }); if (superClass) _setPrototypeOf(subClass, superClass); }
+
+function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || function _setPrototypeOf(o, p) { o.__proto__ = p; return o; }; return _setPrototypeOf(o, p); }
+
+function _createSuper(Derived) { var hasNativeReflectConstruct = _isNativeReflectConstruct(); return function _createSuperInternal() { var Super = _getPrototypeOf(Derived), result; if (hasNativeReflectConstruct) { var NewTarget = _getPrototypeOf(this).constructor; result = Reflect.construct(Super, arguments, NewTarget); } else { result = Super.apply(this, arguments); } return _possibleConstructorReturn(this, result); }; }
+
+function _possibleConstructorReturn(self, call) { if (call && (_typeof(call) === "object" || typeof call === "function")) { return call; } return _assertThisInitialized(self); }
+
+function _assertThisInitialized(self) { if (self === void 0) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return self; }
+
+function _isNativeReflectConstruct() { if (typeof Reflect === "undefined" || !Reflect.construct) return false; if (Reflect.construct.sham) return false; if (typeof Proxy === "function") return true; try { Date.prototype.toString.call(Reflect.construct(Date, [], function () {})); return true; } catch (e) { return false; } }
+
+function _getPrototypeOf(o) { _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf : function _getPrototypeOf(o) { return o.__proto__ || Object.getPrototypeOf(o); }; return _getPrototypeOf(o); }
+
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
+// 1176 byte buffer
+// 3 392 byte sub-buffers
+var RLE = /*#__PURE__*/function (_Processor) {
+  _inherits(RLE, _Processor);
+
+  var _super = _createSuper(RLE);
+
+  function RLE(args, parent) {
+    var _this;
+
+    _classCallCheck(this, RLE);
+
+    _this = _super.call(this, args, parent);
+
+    _defineProperty(_assertThisInitialized(_this), "template", require('./rle.html'));
+
+    _defineProperty(_assertThisInitialized(_this), "table1", _toConsumableArray(Array(16)).map(function (_, i) {
+      return (2 << i) - 1;
+    }));
+
+    var buffer = new Uint8Array(1176);
+    _this.bufferA = new Uint8Array(buffer.buffer, 392 * 0, 392);
+    _this.bufferB = new Uint8Array(buffer.buffer, 392 * 1, 392);
+    _this.bufferC = new Uint8Array(buffer.buffer, 392 * 2, 392);
+    _this.args.offset = 221830;
+    _this.buffer = buffer;
+    return _this;
+  }
+
+  _createClass(RLE, [{
+    key: "run",
+    value: function run() {
+      var _this2 = this;
+
+      var rootPanel = this.args.panel;
+      var title = 'RLE+Delta Decoded ' + this.args.inputName;
+      var widget = new _Canvas.Canvas({
+        buffer: this.buffer,
+        panel: rootPanel,
+        title: title,
+        width: 56,
+        height: 168,
+        scale: 4,
+        decoder: 'gameboy-1bit',
+        module: 'rle'
+      });
+      widget.panel = rootPanel;
+      rootPanel.args.panels.push(new _Panel.Panel({
+        title: title,
+        widget: widget
+      }));
+      this.outputWidget = widget;
+      var buffer = this.args.input.args.buffer.slice(this.args.offset);
+      var bits = new _BitArray.BitArray(buffer);
+      var xSize = bits.next(4) * 8;
+      var ySize = bits.next(4);
+      var size = xSize * ySize;
+      var buffers = [new _BitArray.BitArray(this.bufferB), new _BitArray.BitArray(this.bufferC)];
+      var order = bits.next();
+      var bufB = buffers[order];
+      var bufC = buffers[order ^ 1];
+      widget.addEventListener('attached', function () {
+        _this2.fillBuffer(bufB, bits, size).then(function () {
+          _this2.outputWidget.drawDots();
+
+          var mode = bits.next();
+
+          if (mode === 1) {
+            mode = 1 + bits.next();
+          }
+
+          console.log('MODE ' + mode);
+
+          _this2.fillBuffer(bufC, bits, size).then(function () {
+            if (mode === 0) {
+              _this2.deltaFill(bufB).then(function () {
+                return _this2.deltaFill(bufB);
+              }).then(function () {
+                _this2.copy(new _BitArray.BitArray(_this2.bufferB), new _BitArray.BitArray(_this2.bufferA));
+
+                _this2.copy(new _BitArray.BitArray(_this2.bufferC), new _BitArray.BitArray(_this2.bufferB));
+
+                _this2.empty(new _BitArray.BitArray(_this2.bufferC));
+
+                _this2.outputWidget.drawDots();
+              });
+            } else if (mode === 1) {
+              _this2.deltaFill(bufB).then(function () {
+                _this2.xorFill(bufB, bufC);
+
+                _this2.copy(new _BitArray.BitArray(_this2.bufferB), new _BitArray.BitArray(_this2.bufferA));
+
+                _this2.copy(new _BitArray.BitArray(_this2.bufferC), new _BitArray.BitArray(_this2.bufferB));
+
+                _this2.empty(new _BitArray.BitArray(_this2.bufferC));
+
+                _this2.outputWidget.drawDots();
+              });
+            } else if (mode == 2) {
+              _this2.deltaFill(bufB).then(function () {
+                return _this2.deltaFill(bufC);
+              }).then(function () {
+                _this2.xorFill(bufB, bufC);
+
+                _this2.outputWidget.drawDots();
+
+                _this2.copy(new _BitArray.BitArray(_this2.bufferB), new _BitArray.BitArray(_this2.bufferA));
+
+                _this2.copy(new _BitArray.BitArray(_this2.bufferC), new _BitArray.BitArray(_this2.bufferB));
+
+                _this2.empty(new _BitArray.BitArray(_this2.bufferC));
+
+                _this2.outputWidget.drawDots();
+              });
+            }
+          });
+        });
+      }, {
+        once: true
+      });
+    }
+  }, {
+    key: "fillBuffer",
+    value: function fillBuffer(buffer, bits, size) {
+      var _this3 = this;
+
+      return new Promise(function (accept) {
+        var bitSize = size * 8;
+        var i = 0; // console.log('GET MODE');
+
+        var mode = bits.next();
+
+        var fill = function fill() {
+          if (mode === 0) {
+            i = _this3.rleFill(buffer, bits, i);
+            mode = 1;
+          } else if (mode === 1) {
+            i = _this3.dataFill(buffer, bits, i);
+            mode = 0;
+          }
+
+          if (i < bitSize) {
+            if (i % (56 * 1) === 0) {
+              setTimeout(function () {
+                return fill();
+              }, 100);
+
+              _this3.outputWidget.drawDots();
+            } else {
+              fill();
+            }
+          } else {
+            return accept();
+          }
+        };
+
+        fill();
+      });
+    }
+  }, {
+    key: "rleFill",
+    value: function rleFill(buffer, bits, i) {
+      var ii = 0;
+      var bit = '';
+      var read = '';
+
+      while (bit = bits.next()) {
+        read += bit;
+        ii++;
+      }
+
+      read += bit;
+      var n = this.table1[ii];
+      var a = bits.next(ii + 1);
+      var m = n + a;
+
+      for (var j = 0; j < m; j++) {
+        buffer.set(i++, 0);
+        buffer.set(i++, 0);
+      } // console.log(
+      // 	'repeat 00 %d times, %s, %s, %s, %s'
+      // 	, m
+      // 	, ii
+      // 	, read
+      // 	, n.toString(2).padStart(ii+1, '0')
+      // 	, a.toString(2).padStart(ii+1, '0')
+      // );
+
+
+      return i;
+    }
+  }, {
+    key: "dataFill",
+    value: function dataFill(buffer, bits, i) {
+      var fill = [];
+
+      while (true) {
+        var b1 = bits.next();
+        var b2 = bits.next();
+
+        if (b1 === 0 && b2 === 0) {
+          break;
+        }
+
+        fill.push(b1, b2);
+        buffer.set(i++, b1);
+        buffer.set(i++, b2);
+      } // console.log(fill.length, fill.join(','))
+
+
+      return i;
+    }
+  }, {
+    key: "deltaFill",
+    value: function deltaFill(bits) {
+      var _this4 = this;
+
+      var i = 0,
+          lastBit = 0;
+      var max = bits.length;
+      return new Promise(function (accept) {
+        var fill = function fill() {
+          if (i % 56 === 0) {
+            lastBit = 0;
+          }
+
+          var pixel = _this4.pixelToRowPixel(i);
+
+          var bit = bits.get(pixel);
+
+          if (bit) {
+            lastBit = 1 ^ lastBit;
+          }
+
+          bits.set(pixel, lastBit);
+          i++;
+
+          if (i < max) {
+            if (i % (56 * 2) === 0) {
+              setTimeout(function () {
+                return fill();
+              }, 50);
+
+              _this4.outputWidget.drawDots();
+            } else {
+              fill();
+            }
+          } else {
+            return accept();
+          }
+        };
+
+        fill();
+      });
+    }
+  }, {
+    key: "tilePixelToPixel",
+    value: function tilePixelToPixel(tilePixel) {
+      var width = 56;
+      var oddColumn = tilePixel % (width * 2) >= width;
+      var column = Math.floor(tilePixel / (width * 2));
+      var columnOffset = column * (width * 2);
+      var inColumn = tilePixel - columnOffset;
+      var pixel = columnOffset + (oddColumn ? (inColumn - width) * 2 + 1 : inColumn * 2);
+      return pixel;
+    }
+  }, {
+    key: "pixelToRowPixel",
+    value: function pixelToRowPixel(pixel) {
+      var width = 56;
+      var pEven = pixel % 2 === 0;
+      var xOff = Math.floor(pixel / width);
+      var xEven = xOff % 2 == 0;
+      var yOff = pixel % width;
+      var result = xOff * 2 + yOff * width + (pEven ? 0 : -55); // console.log(pixel, xOff, yOff, result);
+
+      return result;
+    }
+  }, {
+    key: "copy",
+    value: function copy(bitsA, bitsB) {
+      for (var i = 0; i < bitsA.length; i++) {
+        var bitA = bitsA.get(i);
+        bitsB.set(i, bitA);
+      }
+    }
+  }, {
+    key: "untile",
+    value: function untile() {}
+  }, {
+    key: "empty",
+    value: function empty(bits) {
+      for (var i = 0; i < bits.length; i++) {
+        bits.set(i, 0);
+      }
+    }
+  }, {
+    key: "xorFill",
+    value: function xorFill(bitsA, bitsB) {
+      for (var i = 0; i < bitsA.length; i++) {
+        var bitA = bitsA.get(i);
+        var bitB = bitsB.get(i);
+        bitsB.set(i, bitA ^ bitB);
+      }
+    }
+  }]);
+
+  return RLE;
+}(_Processor2.Processor);
+
+exports.RLE = RLE;
+});
+
+;require.register("processor/deinterlace.html", function(exports, require, module) {
+module.exports = "<div data-module = \"canvas invert\">\n\t<div class = \"column\">\n\t\t<label><p>input buffer: [[inputName]]</p></label>\n\t\t<div class = \"row right\">\n\t\t\t<button cv-on = \"click:run(event)\">deinterlace</button>\n\t\t</div>\n\t</div>\n</div>\n"
+});
+
 ;require.register("processor/invert.html", function(exports, require, module) {
-module.exports = "<div data-module = \"canvas invert\">\n\t<div class = \"column\">\n\t\t<label><p>input buffer: [[inputName]]</p></label>\n\t\t<label class = \"column\">\n\t\t\t<p>offset</p>\n\t\t\t<input cv-bind = \"offset\">\n\t\t</label>\n\t\t<label class = \"column\">\n\t\t\t<p>length</p>\n\t\t\t<input cv-bind = \"length\">\n\t\t</label>\n\t\t<div class = \"row right\">\n\t\t\t<button cv-on = \"click:run(event)\">invert</button>\n\t\t</div>\n\t</div>\n</div>\n"
+module.exports = "<div data-module = \"canvas invert\">\n\t<div class = \"column\">\n\t\t<label><p>input buffer: [[inputName]]</p></label>\n\t\t<label class = \"column\">\n\t\t\t<p>offset</p>\n\t\t\t<input type = \"number\" cv-bind = \"offset\">\n\t\t</label>\n\t\t<label class = \"column\">\n\t\t\t<p>length</p>\n\t\t\t<input type = \"number\" cv-bind = \"length\">\n\t\t</label>\n\t\t<div class = \"row right\">\n\t\t\t<button cv-on = \"click:run(event)\">invert</button>\n\t\t</div>\n\t</div>\n</div>\n"
+});
+
+;require.register("processor/rle.html", function(exports, require, module) {
+module.exports = "<div data-module = \"canvas invert\">\n\t<div class = \"column\">\n\n\t\t<label><p>input buffer: [[inputName]]</p></label>\n\n\t\t<label class = \"column\">\n\t\t\t<p>offset</p>\n\t\t\t<input cv-bind = \"offset\">\n\t\t</label>\n\n\t\t<div class = \"row right\">\n\t\t\t<button cv-on = \"click:run(event)\">decompress</button>\n\t\t</div>\n\n\t</div>\n</div>\n"
 });
 
 ;require.register("___globals___", function(exports, require, module) {

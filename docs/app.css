@@ -24,7 +24,7 @@
 
 [data-module~=canvas] canvas {
 	align-self: center;
-	background: #152008;
+	background: #FFF;
 	image-rendering: pixelated;
 	--scale: 1;
 	width: calc(calc(var(--width) * var(--scale)) * 1px) !important;
@@ -137,6 +137,10 @@
 [data-module~=panel]:not([data-panel-type=root]) > .widget {
 	border: 1px solid #000;
 	padding: 0.5em;
+}
+
+[data-module~=canvas][data-module~=rle] .canvas-window {
+	/*transform: scaleX(-1) rotate(90deg);*/
 }
 
 html {

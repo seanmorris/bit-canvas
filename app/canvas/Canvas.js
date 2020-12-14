@@ -11,13 +11,13 @@ export class Canvas extends View
 	{
 		super(args, parent);
 
-		this.args.width   = 128;
-		this.args.height  = 128;
+		this.args.height  = this.args.height || 128;
+		this.args.width   = this.args.width  || 128;
+		this.args.scale   = this.args.scale  || 2;
 		this.args.offset  = 0;
-		this.args.scale   = 2;
 		this.scrollDelta  = 1;
 
-		this.args.decoder  = 'gameboy';
+		this.args.decoder  = args.decoder || 'gameboy';
 		this.args.showSettings = false;
 
 		this.args.buffer = this.args.buffer || false;
@@ -34,8 +34,6 @@ export class Canvas extends View
 		};
 
 		this.args.bindTo('offset', (v,k) => {
-			this.args.offset = v;
-
 			if(!this.args.buffer || !this.tags.canvas)
 			{
 				return;
@@ -55,28 +53,34 @@ export class Canvas extends View
 			{
 				this.drawDots(this.args.buffer);
 			}
-		});
+		}, {wait: 0});
 
 		this.args.bindTo('width', (v,k) => {
+
+			v = Number(v);
+
 			if(this.tags.canvas)
 			{
 				canvasStyle['--width'] = v;
-				this.tags.canvas.style(canvasStyle);
 				this.tags.canvas.width = v;
+				this.tags.canvas.style(canvasStyle);
 			}
 
 			if(this.args.buffer)
 			{
 				this.drawDots(this.args.buffer);
 			}
-		});
+		}, {wait: 0});
 
 		this.args.bindTo('height', (v,k) => {
+
+			v = Number(v);
+
 			if(this.tags.canvas)
 			{
 				canvasStyle['--height'] = v;
-				this.tags.canvas.style(canvasStyle);
 				this.tags.canvas.height = v;
+				this.tags.canvas.style(canvasStyle);
 			}
 
 			if(this.args.buffer)
@@ -84,7 +88,7 @@ export class Canvas extends View
 				this.drawDots(this.args.buffer);
 			}
 
-		});
+		}, {wait: 0});
 
 		this.args.bindTo('input', v => {
 			if(!v)
@@ -136,8 +140,13 @@ export class Canvas extends View
 		}
 	}
 
-	drawDots(bytes)
+	drawDots(bytes = undefined)
 	{
+		if(bytes === undefined)
+		{
+			bytes = this.args.buffer;
+		}
+
 		const canvas  = this.tags.canvas;
 		const context = canvas.getContext('2d');
 
@@ -160,46 +169,25 @@ export class Canvas extends View
 		}
 	};
 
-	nin1bit(bytes)
+	nin1bitCols(bytes)
 	{
 		this.scrollDelta = 1;
 
-		const pallet  = [
-			[0xFF, 0xFF, 0xFF]
-			, [0x44, 0x44, 0x44]
-			, [0xCC, 0xCC, 0xCC]
-			, [0x00, 0x00, 0x00]
-		];
+		const tilesize = 8;
+
 		const canvas  = this.tags.canvas;
 		const context = canvas.getContext('2d');
 
+		const width  = this.args.width;
+		const height = Math.floor(this.args.height / width);
+
 		let o = 0;
 
-		const maxTilesX = Math.floor(this.args.width / 8);
-
-		const height = Math.ceil(this.args.height / 8) * 8;
-		const offset = this.args.offset;
-		const width  = this.args.width;
-
 		const pixelsList = [];
-
-		this.args.firstByte = (offset * (maxTilesX) * 8).toString(16).padStart(4,'0');
 
 		for(let i = 0; i < bytes.length; i += 1)
 		{
 			const byte = bytes[i];
-
-			if(o < offset * (maxTilesX) * 8)
-			{
-				o++;
-				continue;
-			}
-
-			if(o > (height * width) + (offset * (maxTilesX * 8)))
-			{
-				break;
-			}
-
 			const bits = [
 				(byte & 0b10000000) >> 7
 				, (byte & 0b01000000) >> 6
@@ -211,37 +199,90 @@ export class Canvas extends View
 				, (byte & 0b00000001) >> 0
 			];
 
+			if(!pixelsList[currentTileY])
+			{
+				pixelsList[currentTileY] = context.createImageData(
+					maxTilesX * 8, 8
+				);
+			}
+
+			for(const j in bits)
+			{
+				// const
+			}
+		}
+
+		for(const p in pixelsList)
+		{
+			requestAnimationFrame(()=>context.putImageData(pixelsList[p], 0, p*8));
+		}
+	}
+
+	nin1bit(bytes)
+	{
+		this.scrollDelta = 1;
+
+		const tilesize = 2;
+		const canvas  = this.tags.canvas;
+		const context = canvas.getContext('2d');
+
+
+		const maxTilesX = Math.floor(this.args.width / tilesize);
+
+		const offset = this.args.offset;
+		const width  = this.args.width;
+
+		const pixelsList = [];
+
+		this.args.firstByte = offset * width;
+
+		let o = 0;
+		for(let i = 0; i < bytes.length; i += 1)
+		{
+			const byte = bytes[i];
+			const bits = [
+				(byte & 0b00000001) >> 0
+				, (byte & 0b00000010) >> 1
+				, (byte & 0b00000100) >> 2
+				, (byte & 0b00001000) >> 3
+				, (byte & 0b00010000) >> 4
+				, (byte & 0b00100000) >> 5
+				, (byte & 0b01000000) >> 6
+				, (byte & 0b10000000) >> 7
+			];
+
 			for(const j in bits)
 			{
 				const bit = bits[j];
 
-				const ii = o - offset * maxTilesX * 8;
+				const currentTile  = Math.floor(o / tilesize**2);
 
-				const currentTile  = Math.floor(ii / 64);
 				const currentTileX = currentTile % maxTilesX;
 				const currentTileY = Math.floor(currentTile / maxTilesX);
-				const fromTile     = ii % 64;
-				const fromTileY    = Math.floor(fromTile / 8);
-				const fromTileX    = fromTile % 8;
+
+				const tileOffset   = o % tilesize**2;
+
+				const tileOffsetX  = Math.floor(tileOffset / tilesize);
+				const tileOffsetY  = tileOffset % tilesize;
 
 				if(!pixelsList[currentTileY])
 				{
 					pixelsList[currentTileY] = context.createImageData(
-						maxTilesX * 8, 8
+						width, tilesize
 					);
 				}
 
 				const pixels = pixelsList[currentTileY];
 
-				const fromOriginX = (currentTileX * 8) + fromTileX;
-				const fromOriginY = fromTileY;
+				const fromOriginX = (currentTileX * tilesize) + tileOffsetX;
+				const fromOriginY = tileOffsetY;
 
-				const address = 4 * (maxTilesX * 8 * fromOriginY + fromOriginX);
+				const address = 4 * (width * fromOriginY + fromOriginX);
 
-				pixels.data[address+0] = 255;
-				pixels.data[address+1] = 255;
-				pixels.data[address+2] = 255;
-				pixels.data[address+3] = bits[j] * 196;
+				pixels.data[address+0] = bits[j] ? 255 : 0;
+				pixels.data[address+1] = bits[j] ? 255 : 0;
+				pixels.data[address+2] = bits[j] ? 255 : 0;
+				pixels.data[address+3] = bits[j] ? 255 : 255;
 
 				o++;
 			}
@@ -249,7 +290,7 @@ export class Canvas extends View
 
 		for(const p in pixelsList)
 		{
-			requestAnimationFrame(()=>context.putImageData(pixelsList[p], 0, p*8));
+			requestAnimationFrame(()=>context.putImageData(pixelsList[p], 0, p*tilesize));
 		}
 	}
 
@@ -265,7 +306,6 @@ export class Canvas extends View
 		];
 		const canvas  = this.tags.canvas;
 		const context = canvas.getContext('2d');
-
 		let o = 0;
 
 		const maxTilesX = Math.floor(this.args.width / 8);
@@ -276,7 +316,7 @@ export class Canvas extends View
 
 		const pixelsList = [];
 
-		this.args.firstByte = (offset * (maxTilesX) * 8).toString(16).padStart(4,'0');
+		this.args.firstByte = offset * (maxTilesX) * 16;
 
 		for(let i = 0; i < bytes.length; i += 2)
 		{
@@ -315,6 +355,8 @@ export class Canvas extends View
 				const fromTile     = ii % 64;
 				const fromTileY    = Math.floor(fromTile / 8);
 				const fromTileX    = fromTile % 8;
+				const fromOriginX = (currentTileX * 8) + fromTileX;
+				const fromOriginY = fromTileY;
 
 				if(!pixelsList[currentTileY])
 				{
@@ -325,15 +367,12 @@ export class Canvas extends View
 
 				const pixels = pixelsList[currentTileY];
 
-				const fromOriginX = (currentTileX * 8) + fromTileX;
-				const fromOriginY = fromTileY;
-
 				const address = 4 * (maxTilesX * 8 * fromOriginY + fromOriginX);
 
 				pixels.data[address+0] = pallet[ bitPairs[j] ][0];
 				pixels.data[address+1] = pallet[ bitPairs[j] ][1];
 				pixels.data[address+2] = pallet[ bitPairs[j] ][2];
-				pixels.data[address+3] = 127;
+				pixels.data[address+3] = 255;
 
 				o++;
 			}
@@ -347,22 +386,18 @@ export class Canvas extends View
 
 	bytePerPixel(bytes)
 	{
-		console.log(bytes);
-
 		this.scrollDelta = 8;
 
 		const canvas  = this.tags.canvas;
 		const context = canvas.getContext('2d');
 		let i = 0;
 
-		const firstByte  = this.args.offset * this.args.width;
-
-		this.args.firstByte = firstByte.toString(16).padStart(4, '0');
+		this.args.firstByte = this.args.offset * this.args.width;
 
 		const pixelsList = [];
 		const pixelCounts = []
 
-		for(const byte of bytes.slice(firstByte))
+		for(const byte of bytes.slice(this.args.firstByte))
 		{
 			const renderRow  = Math.floor(i / this.args.width);
 			const renderBand = Math.floor(renderRow / 8);
@@ -386,10 +421,10 @@ export class Canvas extends View
 
 			const pixels = pixelsList[renderBand];
 
-			pixels.data[ pixelCounts[renderBand]++ ] = 255;
-			pixels.data[ pixelCounts[renderBand]++ ] = 255;
-			pixels.data[ pixelCounts[renderBand]++ ] = 255;
 			pixels.data[ pixelCounts[renderBand]++ ] = byte;
+			pixels.data[ pixelCounts[renderBand]++ ] = byte;
+			pixels.data[ pixelCounts[renderBand]++ ] = byte;
+			pixels.data[ pixelCounts[renderBand]++ ] = 255;
 
 		}
 
@@ -403,8 +438,6 @@ export class Canvas extends View
 
 	bitPerPixel(bytes)
 	{
-		console.log(bytes);
-
 		this.scrollDelta = 8;
 
 		const canvas  = this.tags.canvas;
@@ -412,12 +445,10 @@ export class Canvas extends View
 		let i = 0;
 		let o = 0;
 
-		const firstByte = 8 * this.args.offset * this.args.width;
+		this.args.firstByte = 8 * this.args.offset * this.args.width;
 
-		this.args.firstByte = firstByte.toString(16).padStart(4, '0');
-
-		const pixelsList = [];
-		const pixelCounts = []
+		const pixelCounts = [];
+		const pixelsList  = [];
 
 		bytes:for(const byte of bytes)
 		{
@@ -465,10 +496,10 @@ export class Canvas extends View
 
 				const pixels = pixelsList[renderBand];
 
-				pixels.data[ pixelCounts[renderBand]++ ] = 255;
-				pixels.data[ pixelCounts[renderBand]++ ] = 255;
-				pixels.data[ pixelCounts[renderBand]++ ] = 255;
 				pixels.data[ pixelCounts[renderBand]++ ] = bit * 255;
+				pixels.data[ pixelCounts[renderBand]++ ] = bit * 255;
+				pixels.data[ pixelCounts[renderBand]++ ] = bit * 255;
+				pixels.data[ pixelCounts[renderBand]++ ] = 255;
 			}
 		}
 
@@ -498,9 +529,17 @@ export class Canvas extends View
 		const rootPanel  = this.args.panel;
 		const input      = this;
 		const menuPanel  = new Panel({
-			title: 'Select a Processor', widget: new Menu({input, panel: rootPanel})
+			title: 'Select a Processor'
+			, widget: new Menu({input, panel: rootPanel})
+			, left: event.clientX + 'px'
+			, top: event.clientY + 'px'
 		});
 
 		rootPanel.args.panels.push(menuPanel);
+	}
+
+	hex(x)
+	{
+		return Number(x).toString(16).padStart(4, '0');
 	}
 }

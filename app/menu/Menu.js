@@ -1,7 +1,9 @@
-import { View } from 'curvature/base/View';
+import { View }   from 'curvature/base/View';
 import { Panel }  from '../panel/Panel';
 
 import { Invert } from '../processor/Invert';
+import { Deinterlace } from '../processor/Deinterlace';
+import { RLE }    from '../processor/RLE';
 
 export class Menu extends View
 {
@@ -11,24 +13,17 @@ export class Menu extends View
 	{
 		super(args,parent);
 
-		this.args.links = {Invert};
+		this.args.links = {Invert, RLE, Deinterlace};
 	}
 
-	click(event, processor)
+	click(event, processor, title)
 	{
 		const rootPanel = this.args.panel;
 
 		const input  = this.args.input;
-		const title  = 'Invert'
-
 		const widget = new processor({input, panel: rootPanel});
-
 		const panel  = new Panel({title, widget});
 
 		rootPanel.args.panels.push(panel);
-
-		console.log(this);
-
-		this.remove();
 	}
 }

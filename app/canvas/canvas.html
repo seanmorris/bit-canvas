@@ -1,4 +1,4 @@
-<div data-module = "canvas">
+<div data-module = "canvas [[module]]">
 
 	<label cv-if = "buffer">
 		<div>
@@ -60,7 +60,7 @@
 		<div class = "canvas-window">
 			<canvas cv-ref = "canvas" cv-on = "wheel(event)"></canvas>
 			<div class = "row">
-				<div><code>0x[[firstByte]]</code></div>
+				<div><code>0x[[firstByte|hex]]</code></div>
 				<div class = "right">
 					<div class = "icon inline-icon zoom-out-icon" cv-on = "click:zoomOut(event)"></div>
 					<div class = "icon inline-icon zoom-in-icon" cv-on = "click:zoomIn(event)"></div>
