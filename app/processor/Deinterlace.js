@@ -18,9 +18,10 @@ export class Deinterlace extends Processor
 	run()
 	{
 		const rootPanel = this.args.panel;
+		const sideSize  = this.args.input.args.width;
 
 		const offset = Number(this.args.offset);
-		const length = 56**2;
+		const length = sideSize**2;
 		const input  = new BitArray(this.args.input.args.buffer);
 
 		const output = new Uint8Array(length);
@@ -28,10 +29,10 @@ export class Deinterlace extends Processor
 		for(let i = 0; i < input.length / 2; i++)
 		{
 			const b1 = input.get(this.pixelToRowPixel(i));
-			const b2 = input.get(this.pixelToRowPixel(i)+56**2);
+			const b2 = input.get(this.pixelToRowPixel(i)+sideSize**2);
 			const b  = b1 << 1 | b2;
 
-			const pallet = [255,64,128,0];
+			const pallet = [255,128,196,64];
 
 			output[i] = pallet[b];
 		}
@@ -39,25 +40,23 @@ export class Deinterlace extends Processor
 		const title  = 'Deinterlaced ' + this.args.inputName;
 		const widget = new Canvas({
 			buffer: output, panel: rootPanel, title
-			, width: 56, height: 56, scale: 4, decoder: 'bytes'
+			, width: sideSize, height: sideSize, scale: 4, decoder: 'bytes'
 		});
 
 		widget.panel = rootPanel;
 
-		rootPanel.args.panels.push(new Panel({title, widget}));
+		rootPanel.panels.add(new Panel({title, widget}));
 	}
 
 	pixelToRowPixel(pixel)
 	{
-		const width  = 56;
+		const width  = this.args.input.args.width;
 		const pEven  = pixel % 2 === 0;
 		const xOff   = Math.floor(pixel / width);
 		const xEven  = xOff % 2 == 0;
 		const yOff   = pixel % width;
 
-		const result = (xOff * 2 + yOff * width) + (pEven ? 0:-55);
-
-		// console.log(pixel, xOff, yOff, result);
+		const result = (xOff * 2 + yOff * width) + (pEven ? 0:-(width-1));
 
 		return result;
 	}

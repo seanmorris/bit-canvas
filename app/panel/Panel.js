@@ -1,24 +1,49 @@
 import { View } from 'curvature/base/View';
+import { Bag  } from 'curvature/base/Bag';
 
 export class Panel extends View
 {
+
 	template = require('./panel.html');
 
 	constructor(args, panel)
 	{
 		super(args, panel);
 
+		this.host = null;
+
+		this.openLeft = 0;
+		this.openTop  = 0;
+
 		this.args.title  = this.args.title  || null;
 		this.args.widget = this.args.widget || null;
-		this.args.panels = [];
+		this.args.left   = 0;
+		this.args.top    = 0;
+		this.args.z      = 0;
 
-		this.args.left = 0;
-		this.args.top  = 0;
+		this.panels = new Bag((i,s,a) => {
 
-		this.style = {
-			'--left':  0
-			, '--top': 0
-		};
+			if(a !== Bag.ITEM_ADDED)
+			{
+				return;
+			}
+
+			i.host = this;
+
+			this.openLeft += 57;
+			this.openTop  += 93;
+
+			i.args.left = this.openLeft;
+			i.args.top  = this.openTop;
+			i.args.z    = Object.values(this.panels.list).length + 1;
+
+			this.openLeft %= Math.floor(window.innerWidth / 2);
+			this.openTop  %= Math.floor(window.innerHeight / 2);
+
+		});
+
+		this.args.panels = this.panels.list;
+
 	}
 
 	onAttached(event)
@@ -45,8 +70,40 @@ export class Panel extends View
 				v = 0;
 			}
 
+			this.args[k] = v;
+
 			this.tags.panel.style({ [`--${k}`] : `${v}px` });
+		},{wait: 0});
+
+		this.args.bindTo('z', (v,k)=>{
+			this.tags.panel.style({ [`--${k}`] : `${v}` });
 		});
+	}
+
+	mousedown(event)
+	{
+		if(!this.host)
+		{
+			return;
+		}
+
+		const panels = Object.values(this.host.panels.list);
+
+		let passed = false;
+
+		for(const i in panels)
+		{
+			const panel = panels[i];
+
+			if(panel === this)
+			{
+				passed = true;
+			}
+
+			panel.args.z = passed ? i-1 : i;
+		}
+
+		this.args.z = panels.length - 1;
 	}
 
 	startFollow()

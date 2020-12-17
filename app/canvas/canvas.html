@@ -49,8 +49,9 @@
 				<option value = "bits">1 bit black & white</option>
 			</optgroup>
 			<optgroup label = "tiles">
-				<option value = "gameboy">2 bit gameboy (2bpp)</option>
-				<option value = "gameboy-1bit">1 bit gameboy (1bpp)</option>
+				<option value = "gameboy">2 bit tiles (2bpp gameboy)</option>
+				<option value = "gameboy-1bit">1 bit tiles (1bpp gameboy)</option>
+				<option value = "gameboy-1bit-cols">1 bit columns (1bpp gameboy)</option>
 			</optgroup>
 		</select>
 	</label>
@@ -58,9 +59,9 @@
 	<label cv-if = "buffer">
 		<p>buffer</p>
 		<div class = "canvas-window">
-			<canvas cv-ref = "canvas" cv-on = "wheel(event)"></canvas>
+			<canvas tabindex = "1" cv-ref = "canvas" cv-on = "wheel(event);keydown(event)"></canvas>
 			<div class = "row">
-				<div><code>0x[[firstByte|hex]]</code></div>
+				<div><code>0x[[offset|hex]]</code></div>
 				<div class = "right">
 					<div class = "icon inline-icon zoom-out-icon" cv-on = "click:zoomOut(event)"></div>
 					<div class = "icon inline-icon zoom-in-icon" cv-on = "click:zoomIn(event)"></div>

@@ -24,6 +24,6 @@ export class Menu extends View
 		const widget = new processor({input, panel: rootPanel});
 		const panel  = new Panel({title, widget});
 
-		rootPanel.args.panels.push(panel);
+		rootPanel.panels.add(panel);
 	}
 }

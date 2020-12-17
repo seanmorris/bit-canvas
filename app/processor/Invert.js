@@ -35,6 +35,6 @@ export class Invert extends Processor
 
 		widget.panel = rootPanel;
 
-		rootPanel.args.panels.push(new Panel({title, widget}));
+		rootPanel.panels.add(new Panel({title, widget}));
 	}
 }
