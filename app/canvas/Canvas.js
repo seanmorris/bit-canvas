@@ -133,11 +133,11 @@ export class Canvas extends View
 
 		if(event.deltaY < 1 && this.args.offset > 0)
 		{
-			this.args.offset = Number(this.args.offset) - this.scrollDelta;
+			this.args.offset -= this.args.width * this.depth;
 		}
 		else if(event.deltaY > 1)
 		{
-			this.args.offset = Number(this.args.offset) + this.scrollDelta;
+			this.args.offset += this.args.width * this.depth;
 		}
 
 		if(0 > this.args.offset)
@@ -170,9 +170,13 @@ export class Canvas extends View
 			{
 				this.args.offset += this.depth;
 			}
+			else if(event.shiftKey)
+			{
+				this.args.offset += this.args.width  * this.depth * 2;
+			}
 			else
 			{
-				this.args.offset += this.scrollDelta;
+				this.args.offset += this.args.width * this.depth;
 			}
 
 			this.drawDots();
@@ -183,9 +187,13 @@ export class Canvas extends View
 			{
 				this.args.offset -= this.depth;
 			}
+			else if(event.shiftKey)
+			{
+				this.args.offset -= this.args.width  * this.depth * 2;
+			}
 			else
 			{
-				this.args.offset -= this.scrollDelta;
+				this.args.offset -= this.args.width * this.depth;
 			}
 
 			if(this.args.offset < 0)
@@ -200,6 +208,10 @@ export class Canvas extends View
 			{
 				this.args.offset++;
 			}
+			else if(event.shiftKey)
+			{
+				this.args.offset += this.tileArea * (this.depth / 8) * 2;
+			}
 			else
 			{
 				this.args.offset += this.tileArea * (this.depth / 8);
@@ -212,6 +224,10 @@ export class Canvas extends View
 			if(event.ctrlKey)
 			{
 				this.args.offset--;
+			}
+			else if(event.shiftKey)
+			{
+				this.args.offset -= this.tileArea * (this.depth / 8) * 2;
 			}
 			else
 			{
@@ -254,28 +270,32 @@ export class Canvas extends View
 
 			requestAnimationFrame(()=>context.clearRect(0, 0, canvas.width, canvas.height));
 
+			let formatter = null;
+
 			switch(this.args.decoder)
 			{
 				case 'bytes':
-					this.bytePerPixel(bytes);
-					break;
-				case 'gameboy':
-					this.nin2bit(bytes);
-					break;
-				case 'gameboy-1bit':
-					this.nin1bit(bytes);
-					break;
-				case 'gameboy-1bit-cols':
-					this.nin1bitCols(bytes);
+					formatter = BytePerPixel;
 					break;
 				case 'bits':
-					this.bitPerPixel(bytes);
+					formatter = BitPerPixel;
+					break;
+				case 'gameboy':
+					formatter = Gameboy2bpp;
+					break;
+				case 'gameboy-1bit':
+					formatter = Gameboy1bpp;
+					break;
+				case 'gameboy-1bit-cols':
+					formatter = Gameboy1bppCol;
 					break;
 			}
+
+			this.format(formatter, bytes)
 		});
 	};
 
-	nin1bitCols(bytes)
+	format(formatter, bytes)
 	{
 		const canvas  = this.tags.canvas;
 		const context = canvas.getContext('2d');
@@ -284,209 +304,20 @@ export class Canvas extends View
 		const output       = context.createImageData(this.args.width, this.args.height);
 		const outputBuffer = output.data;
 
-		const pixels = new Gameboy1bppCol(
+		const pixels = new formatter(
 			inputBuffer
 			, outputBuffer
 			, this.args.width
 		);
 
-		this.scrollDelta = this.args.width * pixels.depth;
-		this.tileArea    = pixels.tileWidth * pixels.tileHeight;
-		this.depth       = pixels.depth;
+		this.tileArea = pixels.tileWidth * pixels.tileHeight;
+		this.depth    = pixels.depth;
 
 		while( pixels.next() );
 
 		requestAnimationFrame(
 			()=>context.putImageData(output, 0, 0)
 		);
-	}
-
-	nin1bit(bytes)
-	{
-		const canvas  = this.tags.canvas;
-		const context = canvas.getContext('2d');
-
-		const inputBuffer  = bytes.slice(this.args.offset);
-		const output       = context.createImageData(this.args.width, this.args.height);
-		const outputBuffer = output.data;
-
-		const pixels = new Gameboy1bpp(
-			inputBuffer
-			, outputBuffer
-			, this.args.width
-		);
-
-		this.scrollDelta = this.args.width;
-		this.tileArea    = pixels.tileWidth * pixels.tileHeight;
-		this.depth       = pixels.depth;
-
-		while( pixels.next() );
-
-		requestAnimationFrame(
-			()=>context.putImageData(output, 0, 0)
-		);
-
-		return;
-	}
-
-	nin2bit(bytes)
-	{
-		const canvas  = this.tags.canvas;
-		const context = canvas.getContext('2d');
-
-		const inputBuffer  = bytes.slice(this.args.offset);
-		const output       = context.createImageData(this.args.width, this.args.height);
-		const outputBuffer = output.data;
-
-		const pixels = new Gameboy2bpp(
-			inputBuffer
-			, outputBuffer
-			, this.args.width
-		);
-
-		this.scrollDelta = this.args.width * pixels.depth;
-		this.tileArea    = pixels.tileWidth * pixels.tileHeight;
-		this.depth       = pixels.depth;
-
-		while( pixels.next() );
-
-		requestAnimationFrame(
-			()=>context.putImageData(output, 0, 0)
-		);
-
-		// const render = () => {
-		// 	context.putImageData(output, 0, 0);
-		// 	if(pixels.next())
-		// 	{
-		// 		requestAnimationFrame(() => render());
-		// 	}
-		// }
-
-		// render();
-	}
-
-	bytePerPixel(bytes)
-	{
-		const canvas  = this.tags.canvas;
-		const context = canvas.getContext('2d');
-
-		const inputBuffer  = bytes.slice(this.args.offset);
-		const output       = context.createImageData(this.args.width, this.args.height);
-		const outputBuffer = output.data;
-
-		const pixels = new BytePerPixel(
-			inputBuffer
-			, outputBuffer
-			, this.args.width
-		);
-
-		this.scrollDelta = this.args.width * pixels.depth;
-		this.tileArea    = pixels.tileWidth * pixels.tileHeight;
-		this.depth       = pixels.depth;
-
-		while( pixels.next() );
-
-		requestAnimationFrame(
-			()=>context.putImageData(output, 0, 0)
-		);
-	}
-
-	bitPerPixel(bytes)
-	{
-		const canvas  = this.tags.canvas;
-		const context = canvas.getContext('2d');
-
-		const inputBuffer  = bytes.slice(this.args.offset);
-		const output       = context.createImageData(this.args.width, this.args.height);
-		const outputBuffer = output.data;
-
-		const pixels = new BitPerPixel(
-			inputBuffer
-			, outputBuffer
-			, this.args.width
-		);
-
-		this.scrollDelta = this.args.width * pixels.depth;
-		this.tileArea    = pixels.tileWidth * pixels.tileHeight;
-		this.depth       = pixels.depth;
-
-		while( pixels.next() );
-
-		requestAnimationFrame(
-			()=>context.putImageData(output, 0, 0)
-		);
-
-		return;
-
-		this.scrollDelta = 8;
-
-		// const canvas  = this.tags.canvas;
-		// const context = canvas.getContext('2d');
-		let i = 0;
-		let o = 0;
-
-		this.args.firstByte = 8 * this.args.offset * this.args.width;
-
-		const pixelCounts = [];
-		const pixelsList  = [];
-
-		bytes:for(const byte of bytes)
-		{
-			const bits = [
-				(byte & 0b10000000) >> 7
-				, (byte & 0b01000000) >> 6
-				, (byte & 0b00100000) >> 5
-				, (byte & 0b00010000) >> 4
-				, (byte & 0b00001000) >> 3
-				, (byte & 0b00000100) >> 2
-				, (byte & 0b00000010) >> 1
-				, (byte & 0b00000001) >> 0
-			];
-
-			bits:for(const bit of bits)
-			{
-
-				const renderRow  = Math.floor(o / this.args.width);
-				const renderBand = Math.floor(renderRow / 8);
-				const rowOffset  = Math.floor(this.args.offset / this.args.width);
-
-				if(!pixelsList[renderBand])
-				{
-					pixelsList[renderBand] = context.createImageData(
-						context.canvas.width, 8
-					);
-
-					pixelCounts[renderBand] = 0;
-				}
-
-				if(i < this.args.offset * this.args.width)
-				{
-					i++;
-					continue;
-				}
-
-				i++;
-
-				if(o > this.args.height * this.args.width)
-				{
-					break bytes;
-				}
-
-				o++;
-
-				const pixels = pixelsList[renderBand];
-
-				pixels.data[ pixelCounts[renderBand]++ ] = bit * 255;
-				pixels.data[ pixelCounts[renderBand]++ ] = bit * 255;
-				pixels.data[ pixelCounts[renderBand]++ ] = bit * 255;
-				pixels.data[ pixelCounts[renderBand]++ ] = 255;
-			}
-		}
-
-		for(const p in pixelsList)
-		{
-			requestAnimationFrame(()=>context.putImageData(pixelsList[p], 0, p*8));
-		}
 	}
 
 	toggleSettings()

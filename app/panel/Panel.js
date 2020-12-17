@@ -35,15 +35,15 @@ export class Panel extends View
 
 			i.args.left = this.openLeft;
 			i.args.top  = this.openTop;
-			i.args.z    = Object.values(this.panels.list).length + 1;
+			i.args.z    = Object.values(this.panels.list).length;
 
 			this.openLeft %= Math.floor(window.innerWidth / 2);
 			this.openTop  %= Math.floor(window.innerHeight / 2);
 
+			i.onRemove(()=>this.panels.remove(i));
 		});
 
 		this.args.panels = this.panels.list;
-
 	}
 
 	onAttached(event)
@@ -87,23 +87,29 @@ export class Panel extends View
 			return;
 		}
 
-		const panels = Object.values(this.host.panels.list);
+		const panels = Object.values(this.host.panels.list).sort((a,b)=>{
+			return b.z > a.z;
+		});
 
-		let passed = false;
 
 		for(const i in panels)
 		{
-			const panel = panels[i];
-
-			if(panel === this)
+			if(panels[i] === this)
 			{
-				passed = true;
+				if(i === 0)
+				{
+					break;
+				}
+				continue;
 			}
 
-			panel.args.z = passed ? i-1 : i;
+			if(panels[i].args.z > this.args.z)
+			{
+				panels[i].args.z--;
+			}
 		}
 
-		this.args.z = panels.length - 1;
+		this.args.z = panels.length;
 	}
 
 	startFollow()

@@ -13,13 +13,6 @@ export class Gameboy1bppCol extends Gameboy1bpp
 			return;
 		}
 
-		const palette  = [
-			[0xFF, 0xFF, 0xFF]
-			, [0x44, 0x44, 0x44]
-			, [0xCC, 0xCC, 0xCC]
-			, [0x00, 0x00, 0x00]
-		];
-
 		const byte = this.inputBuffer[this.inputPos++];
 
 		const maxTilesX = Math.floor(this.width / this.tileWidth);
