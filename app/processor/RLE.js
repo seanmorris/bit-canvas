@@ -4,6 +4,8 @@ import { Canvas } from '../canvas/Canvas';
 
 import { Processor } from '../Processor';
 
+import { RleDelta } from '../decompress/RleDelta';
+
 import { BitArray } from 'pokemon-parser/BitArray';
 
 // 1176 byte buffer
@@ -28,107 +30,119 @@ export class RLE extends Processor
 
 	run()
 	{
-		const bitBuffer = this.args.input.args.buffer.slice(this.args.offset);
+		const inputBuffer = this.args.input.args.buffer;
+		const rootPanel   = this.args.panel;
+		const input       = inputBuffer.slice(this.args.offset)
 
-		const bits  = new BitArray(bitBuffer);
-		let xSize = bits.next(4) || 7;
-		let ySize = bits.next(4) || 7;
+		const rleDelta = new RleDelta(input);
 
-		xSize *= this.tileSize;
-
-		const size  = xSize * ySize;
-
-		xSize = xSize <= 56 ? xSize : 56;
-		ySize = ySize <= 7  ? ySize : 7;
-
-		this.sideSize = ySize;
-
-		this.buffSize = (this.sideSize**2)*this.tileSize;
-
-		const buffer = new Uint8Array(this.buffSize*3);
-
-		this.buffer  = buffer;
-
-		this.bufferA = new Uint8Array(buffer.buffer, this.buffSize*0, this.buffSize);
-		this.bufferB = new Uint8Array(buffer.buffer, this.buffSize*1, this.buffSize*2);
-		this.bufferC = new Uint8Array(buffer.buffer, this.buffSize*2, this.buffSize*1);
-
-		const rootPanel = this.args.panel;
-
-		const title  = 'RLE+Delta Decoded ' + this.args.inputName;
+		console.log(input, rleDelta.buffer);
 
 		const widget = new Canvas({
-			buffer: this.buffer, panel: rootPanel, title
-			, width: this.sideSize  * this.tileSize
-			, height: this.sideSize * this.tileSize * 3
-			, scale: 4
+			buffer:    rleDelta.buffer
+			, panel:   rootPanel
+			, title:   'RLE+Delta Decoded ' + this.args.inputName
+			, width:   rleDelta.sideSize * rleDelta.tileSize
+			, height:  rleDelta.sideSize * rleDelta.tileSize * 2
+			, scale:   4
 			, decoder: 'gameboy-1bit-cols'
-			, module: 'rle'
+			, module:  'rle'
 		});
 
 		rootPanel.panels.add(widget.panel);
 
 		this.outputWidget = widget;
 
-		const buffers = [new BitArray(this.bufferB), new BitArray(this.bufferC)];
+		rleDelta.decompress();
 
-		const order = bits.next();
-
-		const bufB  = buffers[order];
-		const bufC  = buffers[order ^ 1];
-
-		widget.addEventListener('attached', ()=>{
-			this.fillBuffer(bufB, bits, xSize, size).then(()=>{
-
-				this.outputWidget.drawDots();
-				let mode = bits.next();
-
-				if(mode === 1)
-				{
-					mode = 1 + bits.next();
-				}
-
-				this.fillBuffer(bufC, bits, xSize, size).then(()=>{
-					if(mode === 0)
-					{
-						this.deltaFill(bufB, xSize).then(()=>{
-							return this.deltaFill(bufB, xSize);
-						}).then(()=>{
-							this.copy(new BitArray(this.bufferB), new BitArray(this.bufferA), ySize);
-							this.copy(new BitArray(this.bufferC), new BitArray(this.bufferB), ySize);
-							this.empty(new BitArray(this.bufferC));
-							this.outputWidget.drawDots();
-						});
-					}
-					else if(mode === 1)
-					{
-						this.deltaFill(bufB, xSize).then(()=>{
-							this.xorFill(bufB, bufC);
-							this.copy(new BitArray(this.bufferB), new BitArray(this.bufferA), ySize);
-							this.copy(new BitArray(this.bufferC), new BitArray(this.bufferB), ySize);
-							this.empty(new BitArray(this.bufferC));
-							this.outputWidget.drawDots();
-						});
-					}
-					else if(mode == 2)
-					{
-						this.deltaFill(bufB,xSize).then(()=>{
-							return this.deltaFill(bufC,xSize);
-						}).then(()=>{
-							this.xorFill(bufB, bufC);
-							this.outputWidget.drawDots();
-							this.copy(new BitArray(this.bufferB), new BitArray(this.bufferA), ySize);
-							this.copy(new BitArray(this.bufferC), new BitArray(this.bufferB), ySize);
-							this.empty(new BitArray(this.bufferC));
-							this.outputWidget.drawDots();
-						});
-					}
-				});
-
-			});
-		}, {once:true});
+		this.outputWidget.drawDots();
 
 		this.remove();
+
+		// const bitBuffer = this.args.input.args.buffer.slice(this.args.offset);
+
+		// const bits  = new BitArray(bitBuffer);
+		// let xSize = bits.next(4) || 7;
+		// let ySize = bits.next(4) || 7;
+
+		// xSize *= this.tileSize;
+
+		// const size  = xSize * ySize;
+
+		// xSize = xSize <= 56 ? xSize : 56;
+		// ySize = ySize <= 7  ? ySize : 7;
+
+		// this.sideSize = ySize;
+
+		// this.buffSize = (this.sideSize**2)*this.tileSize;
+
+		// const buffer = new Uint8Array(this.buffSize*3);
+
+		// this.buffer  = buffer;
+
+		// this.bufferA = new Uint8Array(buffer.buffer, this.buffSize*0, this.buffSize);
+		// this.bufferB = new Uint8Array(buffer.buffer, this.buffSize*1, this.buffSize*2);
+		// this.bufferC = new Uint8Array(buffer.buffer, this.buffSize*2, this.buffSize*1);
+
+		// const buffers = [new BitArray(this.bufferB), new BitArray(this.bufferC)];
+
+		// const order = bits.next();
+
+		// const bufB  = buffers[order];
+		// const bufC  = buffers[order ^ 1];
+
+		// widget.addEventListener('attached', ()=>{
+		// 	this.fillBuffer(bufB, bits, xSize, size).then(()=>{
+
+		// 		this.outputWidget.drawDots();
+		// 		let mode = bits.next();
+
+		// 		if(mode === 1)
+		// 		{
+		// 			mode = 1 + bits.next();
+		// 		}
+
+		// 		this.fillBuffer(bufC, bits, xSize, size).then(()=>{
+		// 			if(mode === 0)
+		// 			{
+		// 				this.deltaFill(bufB, xSize).then(()=>{
+		// 					return this.deltaFill(bufB, xSize);
+		// 				}).then(()=>{
+		// 					this.copy(new BitArray(this.bufferB), new BitArray(this.bufferA), ySize);
+		// 					this.copy(new BitArray(this.bufferC), new BitArray(this.bufferB), ySize);
+		// 					this.empty(new BitArray(this.bufferC));
+		// 					this.outputWidget.drawDots();
+		// 				});
+		// 			}
+		// 			else if(mode === 1)
+		// 			{
+		// 				this.deltaFill(bufB, xSize).then(()=>{
+		// 					this.xorFill(bufB, bufC);
+		// 					this.copy(new BitArray(this.bufferB), new BitArray(this.bufferA), ySize);
+		// 					this.copy(new BitArray(this.bufferC), new BitArray(this.bufferB), ySize);
+		// 					this.empty(new BitArray(this.bufferC));
+		// 					this.outputWidget.drawDots();
+		// 				});
+		// 			}
+		// 			else if(mode == 2)
+		// 			{
+		// 				this.deltaFill(bufB,xSize).then(()=>{
+		// 					return this.deltaFill(bufC,xSize);
+		// 				}).then(()=>{
+		// 					this.xorFill(bufB, bufC);
+		// 					this.outputWidget.drawDots();
+		// 					this.copy(new BitArray(this.bufferB), new BitArray(this.bufferA), ySize);
+		// 					this.copy(new BitArray(this.bufferC), new BitArray(this.bufferB), ySize);
+		// 					this.empty(new BitArray(this.bufferC));
+		// 					this.outputWidget.drawDots();
+		// 				});
+		// 			}
+		// 		});
+
+		// 	});
+		// }, {once:true});
+
+		// this.remove();
 	}
 
 	fillBuffer(buffer, bits, xSize, size)
@@ -174,7 +188,6 @@ export class RLE extends Processor
 
 			fill();
 		});
-
 	}
 
 	rleFill(buffer, bits, i)
