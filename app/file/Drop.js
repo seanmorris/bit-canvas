@@ -28,7 +28,6 @@ export class Drop extends View
 
 		this.fileDb.then((db)=> db.select(query).each(file => {
 			file && this.args.files.push(file);
-			file && console.log(file, Bindable.shuck(file));
 		}));
 	}
 

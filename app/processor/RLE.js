@@ -33,10 +33,7 @@ export class RLE extends Processor
 		const input       = inputBuffer.slice(this.args.offset)
 
 		const rleDelta = new RleDelta(input);
-
-		console.log(input, rleDelta.buffer);
-
-		const widget = new Canvas({
+		const widget   = new Canvas({
 			buffer:    rleDelta.buffer
 			, panel:   rootPanel
 			, title:   'RLE+Delta Decoded ' + this.args.inputName

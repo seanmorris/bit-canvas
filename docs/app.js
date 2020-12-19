@@ -1515,30 +1515,26 @@ var Mixin = /*#__PURE__*/function () {
   }, {
     key: "to",
     value: function to(base) {
+      var descriptors = {};
+
       for (var _len3 = arguments.length, mixins = new Array(_len3 > 1 ? _len3 - 1 : 0), _key3 = 1; _key3 < _len3; _key3++) {
         mixins[_key3 - 1] = arguments[_key3];
       }
 
       mixins.map(function (mixin) {
-        // const staticSymbols = Object.getOwnPropertyNames(mixin.prototype);
-        // const staticNames   = Object.getOwnPropertySymbols(mixin.prototype);
-        // const symbols = Object.getOwnPropertyNames(mixin);
-        // const names   = Object.getOwnPropertySymbols(mixin);
-        // const properties = [...staticNames, ...staticSymbols];
-        // const properties = Object.keys(mixin);
-        // properties.map(property => {
-        // 	console.log(property, mixin.prototype[property]);
-        // });
         switch (_typeof(mixin)) {
           case 'object':
-            var descriptors = Object.getOwnPropertyDescriptors(mixin);
-            console.log(descriptors);
-            Object.defineProperties(base.prototype, descriptors);
+            Object.assign(descriptors, Object.getOwnPropertyDescriptors(mixin));
             break;
 
           case 'function':
+            Object.assign(descriptors, Object.getOwnPropertyDescriptors(mixin.prototype));
             break;
         }
+
+        delete descriptors.constructor;
+        console.log(descriptors);
+        Object.defineProperties(base.prototype, descriptors);
       });
     }
   }, {
@@ -7189,8 +7185,6 @@ exports.RleDelta = void 0;
 
 var _BitArray = require("pokemon-parser/BitArray");
 
-var _Symbol$iterator;
-
 function _toConsumableArray(arr) { return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _unsupportedIterableToArray(arr) || _nonIterableSpread(); }
 
 function _nonIterableSpread() { throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
@@ -7210,8 +7204,6 @@ function _defineProperties(target, props) { for (var i = 0; i < props.length; i+
 function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
 
 function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
-
-_Symbol$iterator = Symbol.iterator;
 
 var RleDelta = /*#__PURE__*/function () {
   function RleDelta(input) {
@@ -7250,19 +7242,6 @@ var RleDelta = /*#__PURE__*/function () {
   }
 
   _createClass(RleDelta, [{
-    key: _Symbol$iterator,
-    value: function value() {
-      var i = 0;
-      return {
-        next: function next() {
-          return {
-            value: i++,
-            done: i > 4
-          };
-        }
-      };
-    }
-  }, {
     key: "decompress",
     value: function decompress() {
       var buffer = this.buffer;
@@ -7583,7 +7562,6 @@ var Drop = /*#__PURE__*/function (_View) {
     _this.fileDb.then(function (db) {
       return db.select(query).each(function (file) {
         file && _this.args.files.push(file);
-        file && console.log(file, _Bindable.Bindable.shuck(file));
       });
     });
 
@@ -8665,19 +8643,31 @@ exports.Panelable = void 0;
 
 var _Panel = require("./Panel");
 
-var RootPanel = Symbol('RootPanel');
-var MyPanel = Symbol('MyPanel');
-var Panelable = {
-  get panel() {
-    if (!this[MyPanel]) {
-      this[MyPanel] = new _Panel.Panel({}, this);
-    }
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-    return this[MyPanel];
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
+
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
+
+var MyPanel = Symbol('MyPanel');
+
+var Panelable = /*#__PURE__*/function () {
+  function Panelable() {
+    _classCallCheck(this, Panelable);
   }
 
-};
+  _createClass(Panelable, [{
+    key: "panel",
+    get: function get() {
+      return this[MyPanel] || (this[MyPanel] = new _Panel.Panel({}, this));
+    }
+  }]);
+
+  return Panelable;
+}();
+
 exports.Panelable = Panelable;
+;
 });
 
 require.register("panel/panel.html", function(exports, require, module) {
@@ -8981,7 +8971,6 @@ var RLE = /*#__PURE__*/function (_Processor) {
       var rootPanel = this.args.panel;
       var input = inputBuffer.slice(this.args.offset);
       var rleDelta = new _RleDelta.RleDelta(input);
-      console.log(input, rleDelta.buffer);
       var widget = new _Canvas.Canvas({
         buffer: rleDelta.buffer,
         panel: rootPanel,

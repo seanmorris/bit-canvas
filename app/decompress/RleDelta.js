@@ -38,15 +38,6 @@ export class RleDelta
 		console.log(this.buffer);
 	}
 
-	[Symbol.iterator]()
-	{
-		let i = 0;
-
-		return { next: () => {
-			return {value: i++, done: i > 4 };
-		} };
-	}
-
 	decompress()
 	{
 		const buffer  = this.buffer;
