@@ -3,7 +3,6 @@ import { Bag  } from 'curvature/base/Bag';
 
 export class Panel extends View
 {
-
 	template = require('./panel.html');
 
 	constructor(args, panel)
@@ -50,6 +49,12 @@ export class Panel extends View
 	{
 		this.args.bindTo(['left','top'], (v,k)=>{
 			const panel = this.tags.panel;
+
+			if(!panel)
+			{
+				return;
+			}
+
 			const body  = document.body;
 
 			const maxX  = body.clientWidth  - panel.clientWidth;

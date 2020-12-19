@@ -3,7 +3,6 @@ import { Panel } from '../panel/Panel';
 import { Canvas } from '../canvas/Canvas';
 import { BitArray } from 'pokemon-parser/BitArray';
 
-
 import { Processor } from '../Processor';
 
 export class Deinterlace extends Processor
@@ -13,6 +12,8 @@ export class Deinterlace extends Processor
 	constructor(args,parent)
 	{
 		super(args, parent);
+
+		Object.assign(this.panel.args, {title: 'Deinterlace'});
 	}
 
 	run()
@@ -38,14 +39,15 @@ export class Deinterlace extends Processor
 		}
 
 		const title  = 'Deinterlaced ' + this.args.inputName;
+
 		const widget = new Canvas({
 			buffer: output, panel: rootPanel, title
 			, width: sideSize, height: sideSize, scale: 4, decoder: 'bytes'
 		});
 
-		widget.panel = rootPanel;
+		rootPanel.panels.add(widget.panel);
 
-		rootPanel.panels.add(new Panel({title, widget}));
+		this.remove();
 	}
 
 	pixelToRowPixel(pixel)

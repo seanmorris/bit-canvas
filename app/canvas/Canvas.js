@@ -1,7 +1,11 @@
+import { Mixin }  from 'curvature/base/Mixin';
 import { View }   from 'curvature/base/View';
-import { Menu }   from '../menu/Menu';
-import { Panel }  from '../panel/Panel';
+
 import { Invert } from '../processor/Invert';
+import { Menu }   from '../menu/Menu';
+
+import { Panelable } from '../panel/Panelable';
+import { Panel }     from '../panel/Panel';
 
 import { BytePerPixel } from '../format/BytePerPixel';
 import { BitPerPixel  } from '../format/BitPerPixel';
@@ -19,9 +23,9 @@ export class Canvas extends View
 	{
 		super(args, parent);
 
-		this.args.height = this.args.height || 128;
-		this.args.width  = this.args.width  || 128;
-		this.args.scale  = this.args.scale  || 2;
+		this.args.height = args.height || 128;
+		this.args.width  = args.width  || 128;
+		this.args.scale  = args.scale  || 2;
 
 		this.args.tileArea = 1;
 		this.args.offset   = 0;
@@ -30,9 +34,14 @@ export class Canvas extends View
 		this.args.decoder  = args.decoder || 'gameboy';
 		this.args.showSettings = false;
 
-		this.args.buffer = this.args.buffer || false;
+		this.args.input = args.input || false;
 
 		this.args.firstByte = '0000';
+
+		Object.assign(this.panel.args, {
+			widget:  this
+			, title: args.title || args.input && args.input.name || 'Canvas'
+		});
 	}
 
 	onRendered()
@@ -337,16 +346,12 @@ export class Canvas extends View
 
 	run(event)
 	{
-		const rootPanel  = this.args.panel;
-		const input      = this;
-		const menuPanel  = new Panel({
-			title: 'Select a Processor'
-			, widget: new Menu({input, panel: rootPanel})
-			, left: event.clientX + 'px'
-			, top: event.clientY + 'px'
-		});
+		const rootPanel = this.args.panel;
 
-		rootPanel.panels.add(menuPanel);
+		const input = this;
+		const menu  = new Menu({input, panel: rootPanel}, this);
+
+		rootPanel.panels.add(menu.panel);
 	}
 
 	hex(x)
@@ -354,3 +359,5 @@ export class Canvas extends View
 		return Number(x).toString(16).padStart(4, '0');
 	}
 }
+
+Mixin.to(Canvas, Panelable);

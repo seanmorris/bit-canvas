@@ -1,17 +1,16 @@
 import { Panel } from './Panel';
 
-const MyPanel = Symbol('panel');
+const RootPanel = Symbol('RootPanel');
+const MyPanel   = Symbol('MyPanel');
 
-export default panelable = {
+export const Panelable = {
 	get panel() {
 
 		if(!this[MyPanel])
 		{
-			this[MyPanel] = new Panel(this.args, this);
+			this[MyPanel] = new Panel({}, this);
 		}
 
 		return this[MyPanel];
-
 	}
-
 };

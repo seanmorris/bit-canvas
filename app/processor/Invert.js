@@ -11,6 +11,8 @@ export class Invert extends Processor
 	constructor(args,parent)
 	{
 		super(args, parent);
+
+		Object.assign(this.panel.args, {title: 'Invert'});
 	}
 
 	run()
@@ -31,10 +33,14 @@ export class Invert extends Processor
 		const title  = 'Inverted ' + this.args.inputName;
 		const widget = new Canvas({
 			buffer: output, panel: rootPanel, title
+			, decoder: this.args.input.args.decoder
+			, height: this.args.input.args.height
+			, width: this.args.input.args.width
+			, scale: this.args.input.args.scale
 		});
 
-		widget.panel = rootPanel;
+		rootPanel.panels.add(widget.panel);
 
-		rootPanel.panels.add(new Panel({title, widget}));
+		this.remove();
 	}
 }

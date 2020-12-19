@@ -1,3 +1,5 @@
+import { Bindable } from 'curvature/base/Bindable';
+
 import { View } from 'curvature/base/View';
 import { Panel } from '../panel/Panel';
 import { Canvas } from '../canvas/Canvas';
@@ -25,7 +27,8 @@ export class Drop extends View
 		};
 
 		this.fileDb.then((db)=> db.select(query).each(file => {
-			this.args.files.push(file);
+			file && this.args.files.push(file);
+			file && console.log(file, Bindable.shuck(file));
 		}));
 	}
 
@@ -72,7 +75,6 @@ export class Drop extends View
 				this.args.files.push(record);
 
 				this.openCanvasPanel(record);
-
 			});
 		});
 	}
@@ -91,11 +93,8 @@ export class Drop extends View
 	{
 		const rootPanel = this.args.panel;
 
-		const title  = file.name
-		const widget = new Canvas({
-			input: file, panel: rootPanel
-		});
+		const canvas = new Canvas({input: file, panel: rootPanel});
 
-		rootPanel.panels.add(new Panel({title, widget}));
+		rootPanel.panels.add(canvas.panel);
 	}
 }

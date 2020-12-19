@@ -22,6 +22,8 @@ export class RLE extends Processor
 		this.tileSize = 8;
 
 		this.args.offset = 16658;//220252;
+
+		Object.assign(this.panel.args, {title: 'RLE + Delta'});
 	}
 
 	run()
@@ -64,12 +66,9 @@ export class RLE extends Processor
 			, module: 'rle'
 		});
 
-		widget.panel = rootPanel;
-
-		rootPanel.panels.add(new Panel({title, widget}));
+		rootPanel.panels.add(widget.panel);
 
 		this.outputWidget = widget;
-
 
 		const buffers = [new BitArray(this.bufferB), new BitArray(this.bufferC)];
 
@@ -128,6 +127,8 @@ export class RLE extends Processor
 
 			});
 		}, {once:true});
+
+		this.remove();
 	}
 
 	fillBuffer(buffer, bits, xSize, size)

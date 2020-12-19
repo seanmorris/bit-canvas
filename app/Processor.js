@@ -1,10 +1,15 @@
-import { View } from 'curvature/base/View';
+import { Mixin }  from 'curvature/base/Mixin';
+import { View }   from 'curvature/base/View';
+
+import { Panelable } from './panel/Panelable';
 
 export class Processor extends View
 {
 	constructor(args,parent)
 	{
 		super(args, parent);
+
+		Object.assign(this.panel.args, {widget:  this});
 
 		this.args.bindTo('input', v => {
 			if(!v)
@@ -18,3 +23,5 @@ export class Processor extends View
 		});
 	}
 }
+
+Mixin.to(Processor, Panelable);
