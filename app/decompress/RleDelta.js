@@ -18,6 +18,8 @@ export class RleDelta
 		this.xSize = this.bits.next(4) || 7;
 		this.ySize = this.bits.next(4) || 7;
 
+		this.sideSize = this.xSize;
+
 		this.xSize *= this.tileSize;
 
 		this.size  = this.xSize * this.ySize;
@@ -25,16 +27,24 @@ export class RleDelta
 		this.xSize = this.xSize <= 56 ? this.xSize : 56;
 		this.ySize = this.ySize <= 7  ? this.ySize : 7;
 
-		this.sideSize = this.ySize;
 
 		this.buffSize = (this.sideSize**2)*this.tileSize;
 
 		this.buffer = new Uint8Array(this.buffSize*2);
 
-		this.bufferA = new Uint8Array(this.buffer.buffer, this.buffSize*0, this.buffSize*2);
+		this.bufferA = new Uint8Array(this.buffer.buffer, this.buffSize*0, this.buffSize*1);
 		this.bufferB = new Uint8Array(this.buffer.buffer, this.buffSize*1, this.buffSize*1);
 
 		console.log(this.buffer);
+	}
+
+	[Symbol.iterator]()
+	{
+		let i = 0;
+
+		return { next: () => {
+			return {value: i++, done: i > 4 };
+		} };
 	}
 
 	decompress()
@@ -53,6 +63,8 @@ export class RleDelta
 		const bufB  = buffers[order ^ 1];
 
 		this.fillCount = 0;
+		this.fillMode  = null;
+
 		while(this.fillBuffer(bufA, bits, xSize, size));
 
 		let mode = bits.next();
@@ -63,6 +75,7 @@ export class RleDelta
 		}
 
 		this.fillCount = 0;
+		this.fillMode  = null;
 
 		while(this.fillBuffer(bufB, bits, xSize, size));
 
@@ -84,13 +97,32 @@ export class RleDelta
 
 			case 2:
 				this.deltaCount = 0;
+				this.lastBit = 0;
 				while( this.deltaFill(bufA,xSize) );
 				this.deltaCount = 0;
+				this.lastBit = 0;
 				while( this.deltaFill(bufB,xSize) );
 				this.xorCount = 0;
 				while( this.xorFill(bufA, bufB) );
 				break;
 		}
+	}
+
+	tilePixelToPixel(tilePixel)
+	{
+		// const width        = this.sideSize * this.tileSize;
+
+		// const oddColumn    = (tilePixel % (width * 2)) >= width;
+		// const column       = Math.floor(tilePixel / (width * 2));
+		// const columnOffset = column * (width * 2);
+		// const inColumn     = tilePixel - columnOffset;
+
+		// const pixel = columnOffset + (oddColumn
+		// 	? ((inColumn - width) * 2) + 1
+		// 	: inColumn * 2
+		// );
+
+		// return pixel;
 	}
 
 	pixelToRowPixel(pixel)
@@ -108,7 +140,7 @@ export class RleDelta
 
 	xorFill(bitsA, bitsB)
 	{
-		if(this.xorCount >= bitsA.length)
+		if(this.xorCount >= this.buffSize * 8)
 		{
 			return false;
 		}
@@ -125,8 +157,6 @@ export class RleDelta
 
 	deltaFill(bits, xSize)
 	{
-		const max = bits.length;
-
 		if(this.deltaCount % (this.sideSize * this.tileSize) === 0)
 		{
 			this.lastBit = 0;
@@ -145,7 +175,7 @@ export class RleDelta
 
 		this.deltaCount++;
 
-		if(this.deltaCount < max)
+		if(this.deltaCount < this.buffSize * 8)
 		{
 			return true;
 		}

@@ -7189,6 +7189,8 @@ exports.RleDelta = void 0;
 
 var _BitArray = require("pokemon-parser/BitArray");
 
+var _Symbol$iterator;
+
 function _toConsumableArray(arr) { return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _unsupportedIterableToArray(arr) || _nonIterableSpread(); }
 
 function _nonIterableSpread() { throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
@@ -7208,6 +7210,8 @@ function _defineProperties(target, props) { for (var i = 0; i < props.length; i+
 function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
 
 function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
+_Symbol$iterator = Symbol.iterator;
 
 var RleDelta = /*#__PURE__*/function () {
   function RleDelta(input) {
@@ -7233,19 +7237,32 @@ var RleDelta = /*#__PURE__*/function () {
     this.bits = new _BitArray.BitArray(input);
     this.xSize = this.bits.next(4) || 7;
     this.ySize = this.bits.next(4) || 7;
+    this.sideSize = this.xSize;
     this.xSize *= this.tileSize;
     this.size = this.xSize * this.ySize;
     this.xSize = this.xSize <= 56 ? this.xSize : 56;
     this.ySize = this.ySize <= 7 ? this.ySize : 7;
-    this.sideSize = this.ySize;
     this.buffSize = Math.pow(this.sideSize, 2) * this.tileSize;
     this.buffer = new Uint8Array(this.buffSize * 2);
-    this.bufferA = new Uint8Array(this.buffer.buffer, this.buffSize * 0, this.buffSize * 2);
+    this.bufferA = new Uint8Array(this.buffer.buffer, this.buffSize * 0, this.buffSize * 1);
     this.bufferB = new Uint8Array(this.buffer.buffer, this.buffSize * 1, this.buffSize * 1);
     console.log(this.buffer);
   }
 
   _createClass(RleDelta, [{
+    key: _Symbol$iterator,
+    value: function value() {
+      var i = 0;
+      return {
+        next: function next() {
+          return {
+            value: i++,
+            done: i > 4
+          };
+        }
+      };
+    }
+  }, {
     key: "decompress",
     value: function decompress() {
       var buffer = this.buffer;
@@ -7258,6 +7275,7 @@ var RleDelta = /*#__PURE__*/function () {
       var bufA = buffers[order];
       var bufB = buffers[order ^ 1];
       this.fillCount = 0;
+      this.fillMode = null;
 
       while (this.fillBuffer(bufA, bits, xSize, size)) {
         ;
@@ -7270,6 +7288,7 @@ var RleDelta = /*#__PURE__*/function () {
       }
 
       this.fillCount = 0;
+      this.fillMode = null;
 
       while (this.fillBuffer(bufB, bits, xSize, size)) {
         ;
@@ -7308,12 +7327,14 @@ var RleDelta = /*#__PURE__*/function () {
 
         case 2:
           this.deltaCount = 0;
+          this.lastBit = 0;
 
           while (this.deltaFill(bufA, xSize)) {
             ;
           }
 
           this.deltaCount = 0;
+          this.lastBit = 0;
 
           while (this.deltaFill(bufB, xSize)) {
             ;
@@ -7329,6 +7350,19 @@ var RleDelta = /*#__PURE__*/function () {
       }
     }
   }, {
+    key: "tilePixelToPixel",
+    value: function tilePixelToPixel(tilePixel) {// const width        = this.sideSize * this.tileSize;
+      // const oddColumn    = (tilePixel % (width * 2)) >= width;
+      // const column       = Math.floor(tilePixel / (width * 2));
+      // const columnOffset = column * (width * 2);
+      // const inColumn     = tilePixel - columnOffset;
+      // const pixel = columnOffset + (oddColumn
+      // 	? ((inColumn - width) * 2) + 1
+      // 	: inColumn * 2
+      // );
+      // return pixel;
+    }
+  }, {
     key: "pixelToRowPixel",
     value: function pixelToRowPixel(pixel) {
       var width = this.sideSize * this.tileSize;
@@ -7342,7 +7376,7 @@ var RleDelta = /*#__PURE__*/function () {
   }, {
     key: "xorFill",
     value: function xorFill(bitsA, bitsB) {
-      if (this.xorCount >= bitsA.length) {
+      if (this.xorCount >= this.buffSize * 8) {
         return false;
       }
 
@@ -7355,8 +7389,6 @@ var RleDelta = /*#__PURE__*/function () {
   }, {
     key: "deltaFill",
     value: function deltaFill(bits, xSize) {
-      var max = bits.length;
-
       if (this.deltaCount % (this.sideSize * this.tileSize) === 0) {
         this.lastBit = 0;
       }
@@ -7371,7 +7403,7 @@ var RleDelta = /*#__PURE__*/function () {
       bits.set(pixel, this.lastBit);
       this.deltaCount++;
 
-      if (this.deltaCount < max) {
+      if (this.deltaCount < this.buffSize * 8) {
         return true;
       } else {
         return false;
@@ -8252,7 +8284,7 @@ var Gameboy2bpp = /*#__PURE__*/function (_Format) {
         return;
       }
 
-      var palette = [[0xFF, 0xFF, 0xFF], [0x66, 0x66, 0x66], [0xBB, 0xBB, 0xBB], [0x00, 0x00, 0x00]];
+      var palette = [[0xFF, 0xFF, 0xFF], [0x33, 0x33, 0x33], [0x99, 0x99, 0x99], [0x00, 0x00, 0x00]];
       var byteA = this.inputBuffer[this.inputPos++];
       var byteB = this.inputBuffer[this.inputPos++];
       var maxTilesX = Math.floor(this.width / this.tileWidth);
@@ -8914,8 +8946,6 @@ function _getPrototypeOf(o) { _getPrototypeOf = Object.setPrototypeOf ? Object.g
 
 function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
-// 1176 byte buffer
-// 3 392 byte sub-buffers
 var RLE = /*#__PURE__*/function (_Processor) {
   _inherits(RLE, _Processor);
 
@@ -8936,8 +8966,8 @@ var RLE = /*#__PURE__*/function (_Processor) {
 
     _this.sideSize = 7;
     _this.tileSize = 8;
-    _this.args.offset = 16658; //220252;
-
+    _this.args.offset = 16658;
+    _this.args.offset = 220252;
     Object.assign(_this.panel.args, {
       title: 'RLE + Delta'
     });
@@ -8966,251 +8996,7 @@ var RLE = /*#__PURE__*/function (_Processor) {
       this.outputWidget = widget;
       rleDelta.decompress();
       this.outputWidget.drawDots();
-      this.remove(); // const bitBuffer = this.args.input.args.buffer.slice(this.args.offset);
-      // const bits  = new BitArray(bitBuffer);
-      // let xSize = bits.next(4) || 7;
-      // let ySize = bits.next(4) || 7;
-      // xSize *= this.tileSize;
-      // const size  = xSize * ySize;
-      // xSize = xSize <= 56 ? xSize : 56;
-      // ySize = ySize <= 7  ? ySize : 7;
-      // this.sideSize = ySize;
-      // this.buffSize = (this.sideSize**2)*this.tileSize;
-      // const buffer = new Uint8Array(this.buffSize*3);
-      // this.buffer  = buffer;
-      // this.bufferA = new Uint8Array(buffer.buffer, this.buffSize*0, this.buffSize);
-      // this.bufferB = new Uint8Array(buffer.buffer, this.buffSize*1, this.buffSize*2);
-      // this.bufferC = new Uint8Array(buffer.buffer, this.buffSize*2, this.buffSize*1);
-      // const buffers = [new BitArray(this.bufferB), new BitArray(this.bufferC)];
-      // const order = bits.next();
-      // const bufB  = buffers[order];
-      // const bufC  = buffers[order ^ 1];
-      // widget.addEventListener('attached', ()=>{
-      // 	this.fillBuffer(bufB, bits, xSize, size).then(()=>{
-      // 		this.outputWidget.drawDots();
-      // 		let mode = bits.next();
-      // 		if(mode === 1)
-      // 		{
-      // 			mode = 1 + bits.next();
-      // 		}
-      // 		this.fillBuffer(bufC, bits, xSize, size).then(()=>{
-      // 			if(mode === 0)
-      // 			{
-      // 				this.deltaFill(bufB, xSize).then(()=>{
-      // 					return this.deltaFill(bufB, xSize);
-      // 				}).then(()=>{
-      // 					this.copy(new BitArray(this.bufferB), new BitArray(this.bufferA), ySize);
-      // 					this.copy(new BitArray(this.bufferC), new BitArray(this.bufferB), ySize);
-      // 					this.empty(new BitArray(this.bufferC));
-      // 					this.outputWidget.drawDots();
-      // 				});
-      // 			}
-      // 			else if(mode === 1)
-      // 			{
-      // 				this.deltaFill(bufB, xSize).then(()=>{
-      // 					this.xorFill(bufB, bufC);
-      // 					this.copy(new BitArray(this.bufferB), new BitArray(this.bufferA), ySize);
-      // 					this.copy(new BitArray(this.bufferC), new BitArray(this.bufferB), ySize);
-      // 					this.empty(new BitArray(this.bufferC));
-      // 					this.outputWidget.drawDots();
-      // 				});
-      // 			}
-      // 			else if(mode == 2)
-      // 			{
-      // 				this.deltaFill(bufB,xSize).then(()=>{
-      // 					return this.deltaFill(bufC,xSize);
-      // 				}).then(()=>{
-      // 					this.xorFill(bufB, bufC);
-      // 					this.outputWidget.drawDots();
-      // 					this.copy(new BitArray(this.bufferB), new BitArray(this.bufferA), ySize);
-      // 					this.copy(new BitArray(this.bufferC), new BitArray(this.bufferB), ySize);
-      // 					this.empty(new BitArray(this.bufferC));
-      // 					this.outputWidget.drawDots();
-      // 				});
-      // 			}
-      // 		});
-      // 	});
-      // }, {once:true});
-      // this.remove();
-    }
-  }, {
-    key: "fillBuffer",
-    value: function fillBuffer(buffer, bits, xSize, size) {
-      var _this2 = this;
-
-      return new Promise(function (accept) {
-        var bitSize = size * 8;
-        var mode = bits.next();
-        var i = 0;
-
-        var fill = function fill() {
-          if (mode === 0) {
-            i = _this2.rleFill(buffer, bits, i);
-            mode = 1;
-          } else if (mode === 1) {
-            i = _this2.dataFill(buffer, bits, i);
-            mode = 0;
-          }
-
-          if (i < bitSize) {
-            if (i % (_this2.sideSize * _this2.tileSize * 1) === 0) {
-              setTimeout(function () {
-                return fill();
-              }, 100);
-
-              _this2.outputWidget.drawDots();
-            } else {
-              fill();
-            }
-          } else {
-            return accept();
-          }
-        };
-
-        fill();
-      });
-    }
-  }, {
-    key: "rleFill",
-    value: function rleFill(buffer, bits, i) {
-      var ii = 0;
-      var bit = '';
-      var read = '';
-
-      while (bit = bits.next()) {
-        read += bit;
-        ii++;
-      }
-
-      read += bit;
-      var n = this.table1[ii];
-      var a = bits.next(ii + 1);
-      var m = n + a;
-
-      for (var j = 0; j < m; j++) {
-        // buffer.set(i++, 0);
-        // buffer.set(i++, 0);
-        i++;
-        i++;
-      }
-
-      return i;
-    }
-  }, {
-    key: "dataFill",
-    value: function dataFill(buffer, bits, i) {
-      var fill = [];
-
-      while (true) {
-        var b1 = bits.next();
-        var b2 = bits.next();
-
-        if (b1 === 0 && b2 === 0) {
-          break;
-        }
-
-        fill.push(b1, b2);
-        b1 && buffer.set(i, b1);
-        i++;
-        b2 && buffer.set(i, b2);
-        i++;
-      }
-
-      return i;
-    }
-  }, {
-    key: "deltaFill",
-    value: function deltaFill(bits, xSize) {
-      var _this3 = this;
-
-      var i = 0,
-          lastBit = 0;
-      var max = bits.length;
-      return new Promise(function (accept) {
-        var fill = function fill() {
-          if (i % (_this3.sideSize * _this3.tileSize) === 0) {
-            lastBit = 0;
-          }
-
-          var pixel = _this3.pixelToRowPixel(i);
-
-          var bit = bits.get(pixel);
-
-          if (bit) {
-            lastBit = 1 ^ lastBit;
-          }
-
-          bits.set(pixel, lastBit);
-          i++;
-
-          if (i < max) {
-            if (i % _this3.sideSize * _this3.tileSize === 0) {
-              setTimeout(function () {
-                return fill();
-              }, 1);
-
-              _this3.outputWidget.drawDots();
-            } else {
-              fill();
-            }
-          } else {
-            return accept();
-          }
-        };
-
-        fill();
-      });
-    }
-  }, {
-    key: "tilePixelToPixel",
-    value: function tilePixelToPixel(tilePixel) {
-      var width = this.sideSize * this.tileSize;
-      var oddColumn = tilePixel % (width * 2) >= width;
-      var column = Math.floor(tilePixel / (width * 2));
-      var columnOffset = column * (width * 2);
-      var inColumn = tilePixel - columnOffset;
-      var pixel = columnOffset + (oddColumn ? (inColumn - width) * 2 + 1 : inColumn * 2);
-      return pixel;
-    }
-  }, {
-    key: "pixelToRowPixel",
-    value: function pixelToRowPixel(pixel) {
-      var width = this.sideSize * this.tileSize;
-      var pEven = pixel % 2 === 0;
-      var xOff = Math.floor(pixel / width);
-      var xEven = xOff % 2 == 0;
-      var yOff = pixel % width;
-      var result = xOff * 2 + yOff * width + (pEven ? 0 : -(width - 1));
-      return result;
-    }
-  }, {
-    key: "copy",
-    value: function copy(bitsA, bitsB, ySize) {
-      var offset = 7 - ySize;
-
-      for (var i = 0; i < bitsA.length; i++) {
-        var bitA = bitsA.get(i);
-        bitsB.set(i, bitA);
-      }
-    }
-  }, {
-    key: "untile",
-    value: function untile() {}
-  }, {
-    key: "empty",
-    value: function empty(bits) {
-      for (var i = 0; i < bits.length; i++) {
-        bits.set(i, 0);
-      }
-    }
-  }, {
-    key: "xorFill",
-    value: function xorFill(bitsA, bitsB) {
-      for (var i = 0; i < bitsA.length; i++) {
-        var bitA = bitsA.get(i);
-        var bitB = bitsB.get(i);
-        bitsB.set(i, bitA ^ bitB);
-      }
+      this.remove();
     }
   }]);
 
