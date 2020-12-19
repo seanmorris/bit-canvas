@@ -4,9 +4,7 @@ import { Canvas } from '../canvas/Canvas';
 
 import { Processor } from '../Processor';
 
-import { RleDelta } from '../decompress/RleDelta';
-
-import { BitArray } from 'pokemon-parser/BitArray';
+import { RleDelta } from 'pokemon-parser/decompress/RleDelta';
 
 export class RLE extends Processor
 {

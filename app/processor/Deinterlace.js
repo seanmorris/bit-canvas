@@ -5,6 +5,8 @@ import { BitArray } from 'pokemon-parser/BitArray';
 
 import { Processor } from '../Processor';
 
+import { Merge } from 'pokemon-parser/decompress/Merge';
+
 export class Deinterlace extends Processor
 {
 	template = require('./deinterlace.html');
@@ -21,22 +23,10 @@ export class Deinterlace extends Processor
 		const rootPanel = this.args.panel;
 		const sideSize  = this.args.input.args.width;
 
-		const offset = Number(this.args.offset);
-		const length = sideSize**2;
-		const input  = new BitArray(this.args.input.args.buffer);
+		const input = this.args.input.args.buffer;
+		const merge = new Merge(input, sideSize);
 
-		const output = new Uint8Array(length);
-
-		for(let i = 0; i < input.length / 2; i++)
-		{
-			const b1 = input.get(this.pixelToRowPixel(i));
-			const b2 = input.get(this.pixelToRowPixel(i)+sideSize**2);
-			const b  = b1 << 1 | b2;
-
-			const pallet = [255,128,196,64];
-
-			output[i] = pallet[b];
-		}
+		const output = merge.buffer;
 
 		const title  = 'Deinterlaced ' + this.args.inputName;
 
@@ -46,6 +36,12 @@ export class Deinterlace extends Processor
 		});
 
 		rootPanel.panels.add(widget.panel);
+
+		merge.decompress();
+
+		this.outputWidget = widget;
+
+		this.outputWidget.drawDots();
 
 		this.remove();
 	}
