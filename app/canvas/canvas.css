@@ -9,9 +9,42 @@
 	margin-top: 0.25em;
 }
 
-[data-module~=canvas] label {
+[data-module~=canvas] label{
 	display: flex;
 	flex-direction: column;
+	margin-bottom: 0.25em;
+}
+
+[data-module~=canvas] label > div,
+[data-module~=canvas] label > div > div {
+	display: flex;
+	flex-direction: row;
+}
+
+[data-module~=canvas] label .icon:not(.right) {
+	margin-right: 0.25em;
+}
+
+[data-module~=canvas] label .icon.right {
+	margin-right: 0;
+}
+
+[data-module~=canvas] label .icon {
+	background-size: 65%;
+	background-repeat: no-repeat;
+	background-position: center;
+	background-color: black;
+	border: 1px solid #555;
+	border-radius: 5px;
+	padding: 0.5em;
+}
+
+[data-module~=canvas] label .icon:hover {
+	background-color: #222;
+}
+
+[data-module~=canvas] label .icon:active {
+	background: black;
 }
 
 [data-module~=canvas] .canvas-window {

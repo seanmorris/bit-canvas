@@ -344,6 +344,11 @@ export class Canvas extends View
 		this.args.scale--;
 	}
 
+	save(event)
+	{
+
+	}
+
 	run(event)
 	{
 		const rootPanel = this.args.panel;

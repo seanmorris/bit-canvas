@@ -71,3 +71,11 @@ a {
 .icon.x-icon {
 	background-image: url(/x-icon.svg);
 }
+
+.icon.loading-icon {
+	background-image: url(/loading.svg);
+}
+
+.icon.goto-address-icon {
+	background-image: url(/goto-address.svg);
+}

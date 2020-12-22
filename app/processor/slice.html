@@ -1,0 +1,16 @@
+<div data-module = "canvas invert">
+	<div class = "column">
+		<label><p>input buffer: [[inputName]]</p></label>
+		<label class = "column">
+			<p>start</p>
+			<input cv-bind = "start">
+		</label>
+		<label class = "column">
+			<p>end</p>
+			<input cv-bind = "end">
+		</label>
+		<div class = "row right">
+			<button cv-on = "click:run(event)">slice</button>
+		</div>
+	</div>
+</div>

@@ -1,9 +1,9 @@
 import { Mixin }  from 'curvature/base/Mixin';
 import { View }   from 'curvature/base/View';
 
-import { Deinterlace } from '../processor/Deinterlace';
-import { Invert }      from '../processor/Invert';
-import { RLE }         from '../processor/RLE';
+import { Invert } from '../processor/Invert';
+import { Slice }  from '../processor/Slice';
+import { RLE }    from '../processor/RLE';
 
 import { Panelable } from '../panel/Panelable';
 import { Panel }     from '../panel/Panel';
@@ -17,7 +17,7 @@ export class Menu extends View
 	{
 		super(args,parent);
 
-		this.args.links = {Invert, RLE, Deinterlace};
+		this.args.links = {Invert, Slice, RLE};
 
 		Object.assign(this.panel.args, {
 			widget:  this

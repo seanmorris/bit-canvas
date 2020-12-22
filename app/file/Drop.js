@@ -8,6 +8,8 @@ import { Icon } from './Icon';
 import { FileModel } from './FileModel';
 import { FileDatabase } from './FileDatabase';
 
+import { PokemonRom } from 'pokemon-parser/PokemonRom';
+
 export class Drop extends View
 {
 	template = require('./drop.html');
@@ -93,6 +95,12 @@ export class Drop extends View
 		const rootPanel = this.args.panel;
 
 		const canvas = new Canvas({input: file, panel: rootPanel});
+
+		const rom = new PokemonRom;
+
+		rom.preload(new Uint8Array(file.buffer));
+
+		console.log(rom.title);
 
 		rootPanel.panels.add(canvas.panel);
 	}

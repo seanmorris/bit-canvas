@@ -1,7 +1,9 @@
-<div data-module = "menu" cv-each = "links:processor:title">
-	<div>
-		<a cv-link = "/process/[[title]]" cv-on = "click(event, processor, title)">
-			[[title]]
-		</a>
-	</div>
+<div data-module = "menu">
+	<ul cv-each = "links:processor:title">
+		<li>
+			<a cv-link = "/process/[[title]]" cv-on = "click(event, processor, title)">
+				[[title]]
+			</a>
+		</lu>
+	</ul>
 </div>

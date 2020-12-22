@@ -1,10 +1,27 @@
 # BitCavas
 
-Render binaries to canvas. Visualize data as you process it.
-
-Currently aiming at decompressing gameboy graphics with algorithms such as 2BPP, 1BPP, RLE+Delta & LZSS.
-
 https://bit-canvas.seanmorr.is/
+
+## About
+
+Extract & decompress pixel & text from ROM files of classic games.
+
+* Gameboy Encodings:
+	* 2bpp 8x8 tiles
+	* 1bpp 8x8 tiles
+	* 1bpp 2px columns
+	* 4-bit RLE/Delta compressed sprites (pokemon algorithm)
+	* Generation 1 Pokedex data format
+
+* Misc:
+	* 8 bit greyscale
+	* 1 bit b & w
+
+## Decoding Sprites
+
+Right now, the only games supported are the US version of Pokemon Red & Blue. To extract the sprites from the
+
+## Screenshots
 
 ![Screenshot showing pokemon red, 2bpp decoded, with a decompressed Charizard sprite](https://bit-canvas.seanmorr.is/pkmn-red-screenshot.png)
 

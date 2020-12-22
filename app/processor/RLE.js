@@ -5,6 +5,7 @@ import { Canvas } from '../canvas/Canvas';
 import { Processor } from '../Processor';
 
 import { RleDelta } from 'pokemon-parser/decompress/RleDelta';
+import { Merge }    from 'pokemon-parser/decompress/Merge';
 
 export class RLE extends Processor
 {
@@ -31,24 +32,31 @@ export class RLE extends Processor
 		const input       = inputBuffer.slice(this.args.offset)
 
 		const rleDelta = new RleDelta(input);
-		const widget   = new Canvas({
-			buffer:    rleDelta.buffer
-			, panel:   rootPanel
-			, title:   'RLE+Delta Decoded ' + this.args.inputName
-			, width:   rleDelta.sideSize * rleDelta.tileSize
-			, height:  rleDelta.sideSize * rleDelta.tileSize * 2
-			, scale:   4
-			, decoder: 'gameboy-1bit-cols'
-			, module:  'rle'
+
+		rleDelta.decompress();
+
+		const merge = new Merge(rleDelta.buffer, rleDelta.xSize);
+
+		const name   = this.args.inputName
+		const offset = this.args.offset;
+
+		const title  = `RLE + Delta Decoded ${name}:0x${offset.toString(16).toUpperCase()}`;
+
+		const widget = new Canvas({
+			buffer: merge.buffer
+			, panel: rootPanel
+			, title
+			, width: rleDelta.xSize
+			, height: rleDelta.xSize
+			, scale: 4
+			, decoder: 'bytes'
 		});
 
 		rootPanel.panels.add(widget.panel);
 
-		this.outputWidget = widget;
+		merge.decompress();
 
-		rleDelta.decompress();
-
-		this.outputWidget.drawDots();
+		widget.drawDots();
 
 		this.remove();
 	}
