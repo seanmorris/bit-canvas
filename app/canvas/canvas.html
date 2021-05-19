@@ -43,19 +43,19 @@
 	<label cv-if = "buffer">
 		<p>encoding</p>
 		<select cv-bind = "decoder">
-			<optgroup label = "streams">
+			<optgroup label = "raw">
 				<!-- <option value = "">32 bit color (R,G,B,A...)*</option> -->
 				<!-- <option value = "">24 bit color (R,G,B...)*</option> -->
 				<!-- <option value = "">16 bit greyscale*</option> -->
-				<option value = "bytes">8 bit greyscale</option>
 				<!-- <option value = "">4 bit greyscale*</option> -->
 				<!-- <option value = "">2 bit greyscale*</option> -->
+				<option value = "bytes">8 bit greyscale</option>
 				<option value = "bits">1 bit black & white</option>
 			</optgroup>
-			<optgroup label = "tiles">
-				<option value = "gameboy">2 bit tiles (2bpp gameboy)</option>
-				<option value = "gameboy-1bit">1 bit tiles (1bpp gameboy)</option>
-				<option value = "gameboy-1bit-cols">1 bit columns (1bpp gameboy)</option>
+			<optgroup label = "gameboy data">
+				<option value = "gameboy">2bpp - 2 bit 8x8 tiles</option>
+				<option value = "gameboy-1bit">1bpp - 1 bit 8x8 tiles</option>
+				<option value = "gameboy-1bit-cols">1bpp - 1 bit columns</option>
 			</optgroup>
 		</select>
 	</label>

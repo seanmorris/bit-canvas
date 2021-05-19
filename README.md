@@ -19,7 +19,18 @@ Extract & decompress pixel & text from ROM files of classic games.
 
 ## Decoding Sprites
 
-Right now, the only games supported are the US version of Pokemon Red & Blue. To extract the sprites from the
+Right now, the only games supported are the US version of Pokemon Red & Blue. To extract the sprites from the ROM, simply drag the ROM file into the application, and double click to open it. Click the action icon and select RLE. Then input the sprite's offset, for example, Charmander's frontsprite is at 220252.
+
+## Hotkeys
+
+Be sure the canvas is focused first...
+
+🠉/🠋 - Move up/down.
+🠈/🠊 - Move Offset left/right.
+
+Ctrl - Fine movement
+Shift - Coarse movement
+
 
 ## Screenshots
 

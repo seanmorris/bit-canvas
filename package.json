@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "curvature": "^0.0.66-k",
-    "pokemon-parser": "^0.0.1"
+    "pokemon-parser": "0.0.5-c"
   },
   "devDependencies": {
     "@babel/cli": "^7.12.10",

@@ -78,7 +78,7 @@ export class Panel extends View
 			this.args[k] = v;
 
 			this.tags.panel.style({ [`--${k}`] : `${v}px` });
-		},{wait: 0});
+		});
 
 		this.args.bindTo('z', (v,k)=>{
 			this.tags.panel.style({ [`--${k}`] : `${v}` });
@@ -119,15 +119,17 @@ export class Panel extends View
 
 	startFollow()
 	{
-		this.stopMoving = this.listen(document, 'mousemove', event => {
-			this.args.left += event.movementX;
-			this.args.top  += event.movementY;
+		const stopMoving = this.listen(window, 'mousemove', event => {
+			this.args.moving = 'moving';
+			this.args.left = event.pageX - 10;
+			this.args.top  = event.pageY - 10;
 		});
 
-		this.listen(document, 'mouseup', event => {
-			this.stopMoving();
-			this.stopMoving = false;
-		}, {once:true});
+		this.listen(window, 'mouseup', event => {
+			this.args.moving = '';
+
+			stopMoving();
+		});
 	}
 
 	close()

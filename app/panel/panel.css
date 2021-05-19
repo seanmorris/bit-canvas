@@ -32,6 +32,10 @@
 	color: #CCC;
 }
 
+[data-module~=panel].moving {
+	opacity: 0.5;
+}
+
 [data-module~=panel] > .titlebar .right {
 	padding-left: 0.5em;
 }
