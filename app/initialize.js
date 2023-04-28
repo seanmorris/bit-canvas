@@ -71,7 +71,7 @@ document.addEventListener('DOMContentLoaded', function() {
 				, 'charizard_front.bin'
 				, 'bulbasaur_front.bin'
 				, 'ivysaur_front.bin'
-				, 'venusar_front.bin'
+				, 'venusaur_front.bin'
 			];
 
 			const getSamples = Promise.all(sampleUrls.map(u => {
