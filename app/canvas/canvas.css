@@ -9,10 +9,22 @@
 	margin-top: 0.25em;
 }
 
-[data-module~=canvas] label{
+[data-module~=canvas] .row {
+	display: flex;
+	flex-direction: row;
+}
+
+[data-module~=canvas]:not(:first-child) {
+	/* margin-left: 0.5em; */
+}
+
+[data-module~=canvas] .row > label:not(:last-child) {
+	margin-right: 0.5em;
+}
+
+[data-module~=canvas] label {
 	display: flex;
 	flex-direction: column;
-	margin-bottom: 0.25em;
 }
 
 [data-module~=canvas] label > div,
@@ -48,11 +60,26 @@
 }
 
 [data-module~=canvas] .canvas-window {
+	min-width: 192px;
 	display: flex;
 	flex-direction: column;
 	border: 1px solid #555;
 	padding: 0.5em;
 	flex: 1;
+}
+
+[data-module~=canvas] select {
+	border-radius: 0px;
+	border: none;
+}
+
+[data-module~=canvas] input[type=checkbox] {
+	align-self: flex-start;
+}
+
+[data-module~=canvas] .canvas-window label > select,
+[data-module~=canvas] .canvas-window select:not(:last-child) {
+	margin-bottom: 0.5em;
 }
 
 [data-module~=canvas] canvas {
@@ -69,4 +96,16 @@
 
 [data-module~=canvas] .icon {
 	cursor: pointer;
+}
+
+[data-module~=canvas] select[multiple] {
+	height: 100%;
+}
+
+[data-module~=canvas] label:empty {
+	display: none;
+}
+
+[data-module~=canvas]:not(:last-child) {
+	border-right: 1px solid #555;
 }

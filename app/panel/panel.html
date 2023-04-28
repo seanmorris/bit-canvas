@@ -1,4 +1,10 @@
-<div data-module = "panel" class = "[[moving]]" data-panel-type = "[[type]]" cv-ref = "panel" cv-on = "mousedown:mousedown(event):c">
+<div
+	data-module = "panel"
+	class = "[[moving]]"
+	data-panel-type = "[[type]]"
+	cv-ref = "panel"
+	cv-on = "mousedown(event):c;contextmenu(event)"
+>
 	<div class = "titlebar" cv-on = "mousedown:startFollow(event)" cv-if = "title">
 		<span class = "icon inline-icon"></span>
 		<span>[[title]]</span>
@@ -6,6 +12,12 @@
 			<div class = "icon inline-icon x-icon" cv-on = "click:close(event)"></div>
 		</div>
 	</div>
-	<div class = "widget">[[widget]]</div>
+	<div class = "widget" cv-each = "widgets:widget">[[widget]]</div>
 	<div class = "panels" cv-each = "panels:panel">[[panel]]</div>
+
+	<div class = "context-menu">
+		<div class = "v-container" cv-each = "contextMenu:item:key">
+			<div cv-on = "click:contextmenuClicked(event,item,key)">[[item.title]]</div>
+		</div>
+	</div>
 </div>

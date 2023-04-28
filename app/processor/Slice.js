@@ -14,8 +14,11 @@ export class Slice extends Processor
 
 		Object.assign(this.panel.args, {title: 'Slice'});
 
-		this.args.start = '0x14000';
-		this.args.end   = '0x1783F';
+		const start  = this.args.input.args.offset;
+		const length = this.args.input.args.length;
+
+		this.args.start = start;
+		this.args.end   = start + length;
 	}
 
 	run()
@@ -34,17 +37,18 @@ export class Slice extends Processor
 			output[i] = input[i + start];
 		}
 
-		const name  = this.args.inputName;
+		const name     = this.args.inputName;
 		const startHex = start.toString(16).toUpperCase();
 		const endHex   = end.toString(16).toUpperCase();
 
-		const title  = `Sliced ${name} 0x${startHex}-0x${endHex}`;
-		const widget = new Canvas({
+		const title    = `${name}@0x${startHex}.bin`
+
+		const widget   = new Canvas({
 			buffer: output, panel: rootPanel, title
 			, decoder: this.args.input.args.decoder
-			, height: this.args.input.args.height
-			, width: this.args.input.args.width
-			, scale: this.args.input.args.scale
+			, height: 32
+			, width: 128
+			, scale: 2
 		});
 
 		rootPanel.panels.add(widget.panel);

@@ -1,5 +1,8 @@
+import { Bindable } from 'curvature/base/Bindable';
 import { View } from 'curvature/base/View';
 import { Bag  } from 'curvature/base/Bag';
+
+import { DeleteConfirm } from '../processor/DeleteConfirm';
 
 export class Panel extends View
 {
@@ -14,11 +17,12 @@ export class Panel extends View
 		this.openLeft = 0;
 		this.openTop  = 0;
 
-		this.args.title  = this.args.title  || null;
-		this.args.widget = this.args.widget || null;
-		this.args.left   = 0;
-		this.args.top    = 0;
-		this.args.z      = 0;
+		this.args.widgets = Bindable.make(this.args.widgets || []);
+		this.args.title   = this.args.title  || null;
+		this.args.widget  = this.args.widget || null;
+		this.args.left    = 0;
+		this.args.top     = 0;
+		this.args.z       = 0;
 
 		this.panels = new Bag((i,s,a) => {
 
@@ -42,12 +46,14 @@ export class Panel extends View
 			i.onRemove(()=>this.panels.remove(i));
 		});
 
+		this.args.widgets.bindTo((v,k) => {v.parent = this});
+
 		this.args.panels = this.panels.list;
 	}
 
 	onAttached(event)
 	{
-		this.args.bindTo(['left','top'], (v,k)=>{
+		this.args.bindTo(['left', 'top', 'contextMenuXL', 'contextMenuXR', 'contextMenuYT', 'contextMenuYB'], (v,k)=>{
 			const panel = this.tags.panel;
 
 			if(!panel)
@@ -77,7 +83,12 @@ export class Panel extends View
 
 			this.args[k] = v;
 
-			this.tags.panel.style({ [`--${k}`] : `${v}px` });
+			if(v == Number(v))
+			{
+				v = v + 'px';
+			}
+
+			this.tags.panel.style({ [`--${k}`] : `${v}` });
 		});
 
 		this.args.bindTo('z', (v,k)=>{
@@ -117,12 +128,81 @@ export class Panel extends View
 		this.args.z = panels.length;
 	}
 
+	contextmenu(event, file, icon)
+	{
+		event.stopPropagation();
+		event.preventDefault();
+
+		if(this.args.type !== 'root')
+		{
+			return;
+		}
+
+		if(!file)
+		{
+			this.args.contextMenu = [
+				{title: 'import', callback: () => {
+					icon.args.widgets[0].importFile()
+					this.args.contextMenu = [];
+				}},
+			];
+		}
+		else
+		{
+			this.args.contextMenu = [
+				{title: 'open',   callback: () => icon.openCanvasPanel(file)},
+				{title: 'delete', callback: () => this.openDeleteDialog(file, icon)},
+			];
+		}
+
+		this.args.contextMenuX = event.pageX;
+		const docWidth  = document.body.offsetWidth;
+		const docHeight = document.body.offsetHeight;
+
+		if(event.pageX > 0.5 * docWidth)
+		{
+			this.args.contextMenuXR = (docWidth - event.pageX) + 'px';
+			this.args.contextMenuXL = 'initial';
+		}
+		else
+		{
+			this.args.contextMenuXR = 'initial';
+			this.args.contextMenuXL = event.pageX + 'px';
+		}
+
+		if(event.pageY > 0.5 * docHeight)
+		{
+			this.args.contextMenuYB = (docHeight - event.pageY) + 'px';
+			this.args.contextMenuYT = 'initial';
+		}
+		else
+		{
+			this.args.contextMenuYT = event.pageY + 'px';
+			this.args.contextMenuYB = 'initial';
+		}
+	}
+
+	contextmenuClicked(event, item, key)
+	{
+		item.callback(event, key);
+
+		console.log(event, item, key);
+		this.args.contextMenu = [];
+	}
+
+	openDeleteDialog(file, icon)
+	{
+		const deleteConfirm = new DeleteConfirm({panel:this, file, icon});
+
+		this.panels.add(deleteConfirm.panel);
+	}
+
 	startFollow()
 	{
 		const stopMoving = this.listen(window, 'mousemove', event => {
-			this.args.moving = 'moving';
 			this.args.left = event.pageX - 10;
 			this.args.top  = event.pageY - 10;
+			this.args.moving = 'moving';
 		});
 
 		this.listen(window, 'mouseup', event => {
@@ -134,9 +214,15 @@ export class Panel extends View
 
 	close()
 	{
-		if(typeof this.args.widget == 'object' && typeof this.args.widget.remove == 'function')
+		if(this.args.widgets)
 		{
-			this.args.widget.remove();
+			for(const widget of this.args.widgets)
+			{
+				if(typeof widget == 'object' && typeof widget.remove == 'function')
+				{
+					widget.remove();
+				}
+			}
 		}
 
 		this.remove();

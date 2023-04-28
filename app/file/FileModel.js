@@ -5,6 +5,7 @@ export class FileModel extends Model
 	static keyProps = ['name']
 
 	lastModified;
+	buffer;
 	name;
 	size;
 	type;

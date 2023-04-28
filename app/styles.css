@@ -68,6 +68,14 @@ a {
 	background-image: url(/run-icon.svg);
 }
 
+.icon.slice-icon {
+	background-image: url(/slice.svg);
+}
+
+.icon.invert-icon {
+	background-image: url(/invert.svg);
+}
+
 .icon.x-icon {
 	background-image: url(/x-icon.svg);
 }
@@ -78,4 +86,8 @@ a {
 
 .icon.goto-address-icon {
 	background-image: url(/goto-address.svg);
+}
+
+.contents {
+	display: contents;
 }

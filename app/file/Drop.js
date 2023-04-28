@@ -5,8 +5,9 @@ import { Panel } from '../panel/Panel';
 import { Canvas } from '../canvas/Canvas';
 
 import { Icon } from './Icon';
-import { FileModel } from './FileModel';
+
 import { FileDatabase } from './FileDatabase';
+import { FileModel } from './FileModel';
 
 import { PokemonRom } from 'pokemon-parser/PokemonRom';
 
@@ -22,11 +23,14 @@ export class Drop extends View
 
 		this.fileDb = FileDatabase.open('files', 1);
 
-		const query = {
-			store: 'files'
-			, index: 'name'
-			, type:  FileModel
-		};
+		this.refresh();
+	}
+
+	refresh()
+	{
+		const query = {store: 'files', index: 'name', type:  FileModel};
+
+		this.args.files = [];
 
 		this.fileDb.then((db)=> db.select(query).each(file => {
 			file && this.args.files.push(file);
@@ -37,47 +41,8 @@ export class Drop extends View
 	{
 		event.preventDefault();
 
-		const file   = event.dataTransfer.files[0];
-		const buffer = file.arrayBuffer();
-		const fileDb = this.fileDb;
+		this.importFiles(event.dataTransfer.files);
 
-		Promise.all([buffer, fileDb]).then(([buffer, fileDb])=>{
-
-			const query = {
-				store: 'files'
-				, index: 'name'
-				, range: file.name
-				, type:  FileModel
-			};
-
-			const values = {
-				name: file.name
-				, lastModified: file.lastModified
-				, size: file.size
-				, type: file.type
-				, buffer: buffer
-			};
-
-			fileDb.select(query).one().then(result => {
-
-				let record = result.record;
-
-				if(!record)
-				{
-					record = FileModel.from(values);
-					fileDb.insert('files', record);
-				}
-				else
-				{
-					record.consume(values);
-					fileDb.update('files', record);
-				}
-
-				this.args.files.push(record);
-
-				this.openCanvasPanel(record);
-			});
-		});
 	}
 
 	dragover(event)
@@ -88,6 +53,68 @@ export class Drop extends View
 	iconClicked(event, file)
 	{
 		this.openCanvasPanel(file);
+	}
+
+	importFile()
+	{
+		const input = document.createElement('input');
+
+		input.setAttribute('type', 'file');
+		input.addEventListener('change', event => {
+
+			console.log(event);
+			this.importFiles(input.files);
+
+		}, {once:true});
+
+		input.click();
+	}
+
+	importFiles(files)
+	{
+		for(const file of files)
+		{
+			const buffer = file.arrayBuffer();
+			const fileDb = this.fileDb;
+
+			Promise.all([buffer, fileDb]).then(([buffer, fileDb])=>{
+
+				const query = {
+					store: 'files'
+					, index: 'name'
+					, range: file.name
+					, type:  FileModel
+				};
+
+				const values = {
+					name: file.name
+					, lastModified: file.lastModified
+					, size: file.size
+					, type: file.type
+					, buffer: buffer
+				};
+
+				fileDb.select(query).one().then(result => {
+
+					let record = result.record;
+
+					if(!record)
+					{
+						record = FileModel.from(values);
+						fileDb.insert('files', record);
+					}
+					else
+					{
+						record.consume(values);
+						fileDb.update('files', record);
+					}
+
+					this.args.files.push(record);
+
+					this.openCanvasPanel(record);
+				});
+			});
+		}
 	}
 
 	openCanvasPanel(file)

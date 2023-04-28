@@ -1,9 +1,9 @@
-<div data-module = "file-drop" cv-on = "drop(event);dragover(event)">
+<div data-module = "file-drop" cv-on = "drop(event);dragover(event);contextmenu(event, file, $parent);">
 	drop files here.
 </div>
 
 <div data-module = "file-list" cv-each = "files:file" cv-view = "/file/Icon">
-	<div tabindex = "0" class = "file" cv-on = "dblclick:iconClicked(event, file)">
+	<div tabindex = "0" class = "file" cv-on = "dblclick:iconClicked(event, file); contextmenu(event, file, $parent);">
 		<img src = "/gameboy.ico">
 		<span>[[file.name]]</span>
 	</div>

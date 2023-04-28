@@ -1,12 +1,13 @@
 [data-module="file-list"] {
 	justify-content: flex-start;
+	word-break: break-all;
 	align-items: stretch;
 	position: absolute;
 	flex-wrap: wrap;
 	display: flex;
 	width: 100%;
 	left: 0px;
-	bottom: 0px;
+	top: 0px;
 }
 
 [data-module="file-list"] .file {

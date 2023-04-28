@@ -9,7 +9,7 @@ export class Processor extends View
 	{
 		super(args, parent);
 
-		Object.assign(this.panel.args, {widget:  this});
+		Object.assign(this.panel.args, {widgets: [this]});
 
 		this.args.bindTo('input', v => {
 			if(!v)

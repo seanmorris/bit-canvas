@@ -1,7 +1,6 @@
 import { Mixin }  from 'curvature/base/Mixin';
 import { View }   from 'curvature/base/View';
 
-import { Invert } from '../processor/Invert';
 import { Menu }   from '../menu/Menu';
 
 import { Panelable } from '../panel/Panelable';
@@ -15,6 +14,12 @@ import { Gameboy2bpp } from '../format/Gameboy2bpp';
 
 import { Gameboy1bppCol } from '../format/Gameboy1bppCol';
 
+import { PokemonRom } from 'pokemon-parser/PokemonRom';
+
+import { Invert } from '../processor/Invert';
+import { Slice }  from '../processor/Slice';
+import { RLE }    from '../processor/RLE';
+
 export class Canvas extends View
 {
 	template = require('./canvas.html');
@@ -23,25 +28,46 @@ export class Canvas extends View
 	{
 		super(args, parent);
 
-		this.args.height = args.height || 128;
+		this.args.height = args.height || 64;
 		this.args.width  = args.width  || 128;
 		this.args.scale  = args.scale  || 2;
 
 		this.args.tileArea = 1;
 		this.args.offset   = 0;
-		this.scrollDelta   = 1;
 
-		this.args.decoder  = args.decoder || 'gameboy';
+		this.scrollDelta = 1;
+
+		this.args.decoder = args.decoder || 'gameboy';
+
 		this.args.showSettings = false;
 
 		this.args.input = args.input || false;
 
 		this.args.firstByte = '0000';
 
-		Object.assign(this.panel.args, {
-			widget:  this
-			, title: args.title || args.input && args.input.name || 'Canvas'
+		this.panel.args.widgets = [this];
+
+		this.args.name = (args.input && args.input.name) || args.title || 'Canvas';
+
+		this.args.bindTo('name', v => {
+			this.panel.args.title = v;
+
+			if(this.args.input)
+			{
+				this.args.input.name = v;
+			}
 		});
+
+		const rootPanel = this.args.panel;
+		const input = this;
+
+		this.args.toolBar = [
+			  { icon: 'gear',  action: event => this.toggleSettings(event) }
+			, { icon: 'run',   action: event => rootPanel.panels.add(new RLE({input, panel: rootPanel}, this).panel) }
+			, { icon: 'slice', action: event => rootPanel.panels.add(new Slice({input, panel: rootPanel}, this).panel) }
+			, { icon: 'save',  action: event => this.save(event) }
+			// , { icon: 'invert', action: event => rootPanel.panels.add(new Invert({input, panel: rootPanel}, this).panel) }
+		];
 	}
 
 	onRendered()
@@ -115,12 +141,62 @@ export class Canvas extends View
 				return;
 			}
 
+			this.args.height = Math.ceil(new Uint8Array(v.buffer).length / 16) || this.args.height;
+
+			this.args.height = Math.min(160, this.args.height);
+
+			console.log(v.buffer);
+
 			this.args.filename = v.name;
 
 			this.args.buffer = new Uint8Array(v.buffer);
 
 			this.onTimeout(0, () => {
 				this.drawDots(this.args.buffer);
+			});
+
+			crypto.subtle.digest("SHA-256", this.args.input.buffer).then(digestBytes => {
+				const digest = Array.from(new Uint8Array(digestBytes))
+				.map((b) => b.toString(16).padStart(2, "0"))
+				.join("");
+
+				const pokemonHashes = [
+					'5ca7ba01642a3b27b0cc0b5349b52792795b62d3ed977e98a09390659af96b7b',
+					'2a951313c2640e8c2cb21f25d1db019ae6245d9c7121f754fa61afd7bee6452d',
+				];
+
+				if(!pokemonHashes.includes(digest))
+				{
+					return;
+				}
+
+				const rom = new PokemonRom();
+
+				this.args.spriteOffsets = {};
+
+				rom.preload(this.args.buffer).then(() => {
+
+					rom.getAllPokemon().then(allPokemon => {
+
+						allPokemon = allPokemon.filter(a => a.number).sort((a,b)=>{
+							return a.number - b.number;
+						});
+
+						for(const pokemon of allPokemon)
+						{
+							const frontOffset = pokemon.sprites.front.offset + ':' + pokemon.sprites.front.length;
+							const backOffset  = pokemon.sprites.back.offset + ':' + pokemon.sprites.back.length;
+							const number      = pokemon.number.toString().padStart('0', 3);
+							const name        = pokemon.name;
+
+							this.args.spriteOffsets[frontOffset] = `# ${number} ${name} FRONT`;
+							this.args.spriteOffsets[backOffset]  = `# ${number} ${name} BACK`;
+						}
+
+					});
+
+				});
+
 			});
 		});
 
@@ -344,19 +420,41 @@ export class Canvas extends View
 		this.args.scale--;
 	}
 
-	save(event)
+	jump(event)
 	{
+		const [offset, length] = event.target.value.split(':');
 
+		this.args.offset = Number(offset);
+		this.args.length = Number(length);
 	}
 
-	run(event)
+	save(event)
 	{
-		const rootPanel = this.args.panel;
+		const link = document.createElement('a');
+		const blob = new Blob([this.args.buffer]);
+		const oURL = URL.createObjectURL(blob);
 
-		const input = this;
-		const menu  = new Menu({input, panel: rootPanel}, this);
+		link.setAttribute('download', this.args.name);
+		link.setAttribute('href', oURL);
 
-		rootPanel.panels.add(menu.panel);
+		console.log(this.args.buffer);
+
+		link.click();
+	}
+
+	// run(event)
+	// {
+	// 	const rootPanel = this.args.panel;
+
+	// 	const input = this;
+	// 	const menu  = new Menu({input, panel: rootPanel}, this);
+
+	// 	rootPanel.panels.add(menu.panel);
+	// }
+
+	runAction(event, button)
+	{
+		button.action(event);
 	}
 
 	hex(x)

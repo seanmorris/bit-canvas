@@ -1,19 +1,38 @@
 <div data-module = "canvas [[module]]">
 
+	<p>[[name]]</p>
+
 	<label cv-if = "buffer">
 		<div>
+			<div class = "tool-bar" cv-each = "toolBar:button">
+				<div class = "icon inline-icon [[button.icon]]-icon" cv-on = "click:runAction(event, button)"></div>
+			</div>
+
+			<!--
+			<div>
+				<div class = "icon inline-icon goto-address-icon" cv-on = "click:goto(event)"></div>
+			</div>
+			-->
+			<!--
 			<div>
 				<div class = "icon inline-icon gear-icon" cv-on = "click:toggleSettings(event)"></div>
-				<!-- <div class = "icon inline-icon save-icon"cv-on = "click:save(event)"></div> -->
 				<div class = "icon inline-icon run-icon" cv-on = "click:run(event)"></div>
-				<!-- <div class = "icon inline-icon goto-address-icon" cv-on = "click:goto(event)"></div> -->
+				<div class = "icon inline-icon save-icon"cv-on = "click:save(event)"></div>
 			</div>
-			<!-- <div class = "icon inline-icon loading-icon right"></div> -->
+ 			-->
+ 			<div cv-if = "loading" class = "right">
+				<div class = "icon inline-icon loading-icon right"></div>
+			</div>
 			<!-- <div class = "icon inline-icon folder-icon"></div> -->
 		</div>
 	</label>
 
 	<span cv-if = "showSettings">
+
+		<label cv-if = "buffer">
+			<p>name</p>
+			<input cv-bind = "name" type = "text">
+		</label>
 
 		<label cv-if = "buffer">
 			<p>width</p>
@@ -40,37 +59,55 @@
 		<input type = "file" cv-bind = "input">
 	</label>
 
-	<label cv-if = "buffer">
-		<p>encoding</p>
-		<select cv-bind = "decoder">
-			<optgroup label = "raw">
-				<!-- <option value = "">32 bit color (R,G,B,A...)*</option> -->
-				<!-- <option value = "">24 bit color (R,G,B...)*</option> -->
-				<!-- <option value = "">16 bit greyscale*</option> -->
-				<!-- <option value = "">4 bit greyscale*</option> -->
-				<!-- <option value = "">2 bit greyscale*</option> -->
-				<option value = "bytes">8 bit greyscale</option>
-				<option value = "bits">1 bit black & white</option>
-			</optgroup>
-			<optgroup label = "gameboy data">
-				<option value = "gameboy">2bpp - 2 bit 8x8 tiles</option>
-				<option value = "gameboy-1bit">1bpp - 1 bit 8x8 tiles</option>
-				<option value = "gameboy-1bit-cols">1bpp - 1 bit columns</option>
-			</optgroup>
-		</select>
-	</label>
+	<div class = "row">
 
-	<label cv-if = "buffer">
-		<p>buffer</p>
-		<div class = "canvas-window">
-			<canvas tabindex = "0" cv-ref = "canvas" cv-on = "wheel(event);keydown(event)"></canvas>
-			<div class = "row">
-				<div><code>0x[[offset|hex]]</code></div>
-				<div class = "right">
-					<div class = "icon inline-icon zoom-out-icon" cv-on = "click:zoomOut(event)"></div>
-					<div class = "icon inline-icon zoom-in-icon" cv-on = "click:zoomIn(event)"></div>
+		<label cv-if = "spriteOffsets">
+			<p>offsets</p>
+			<div class = "canvas-window">
+				<select multiple="multiple"  cv-on = "change:jump(event)">
+					<optgroup label = "tiles">
+						<option value = "65536">OVERWORLD CHARACTERS 1</option>
+						<option value = "81920">OVERWORLD CHARACTERS 2</option>
+						<option value = "70784">TITLESCREEN GRAPHICS</option>
+						<option value = "0x11a80">FONTS (1BPP)</option>
+						<option value = "0x64000">MAP TILES</option>
+					</optgroup>
+					<optgroup label = "sprites" cv-each = "spriteOffsets:name:offset">
+						<option value = "[[offset]]">[[name]]</option>
+					</optgroup>
+				</select>
+			</div>
+		</label>
+
+		<label cv-if = "buffer" for="">
+			<p>buffer</p>
+			<div class = "canvas-window">
+				<label cv-if = "buffer">
+					<p>encoding</p>
+					<select cv-bind = "decoder">
+						<optgroup label = "raw">
+							<option value = "bytes">8 bit greyscale</option>
+							<option value = "bits">1 bit black & white</option>
+						</optgroup>
+						<optgroup label = "gameboy data">
+							<option value = "gameboy">2bpp - 2 bit 8x8 tiles</option>
+							<option value = "gameboy-1bit">1bpp - 1 bit 8x8 tiles</option>
+							<option value = "gameboy-1bit-cols">1bpp - 1 bit columns</option>
+						</optgroup>
+					</select>
+				</label>
+				<canvas tabindex = "0" cv-ref = "canvas" cv-on = "wheel(event);keydown(event)"></canvas>
+				<div class = "row">
+					<div><code>0x[[offset|hex]]</code></div>
+					<div class = "right">
+						<div class = "icon inline-icon zoom-out-icon" cv-on = "click:zoomOut(event)"></div>
+						<div class = "icon inline-icon zoom-in-icon" cv-on = "click:zoomIn(event)"></div>
+					</div>
 				</div>
 			</div>
-		</div>
-	</label>
+		</label>
+
+		[[mergeWidget]]
+
+	</div>
 </div>

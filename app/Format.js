@@ -13,4 +13,11 @@ export class Format
 
 		this.width = width;
 	}
+
+	next()
+	{
+		console.warn(
+			`Error: ${this.constructor.name}::next() has not been implemented.`
+		);
+	}
 }

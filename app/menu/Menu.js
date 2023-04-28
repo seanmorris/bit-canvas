@@ -20,8 +20,8 @@ export class Menu extends View
 		this.args.links = {Invert, Slice, RLE};
 
 		Object.assign(this.panel.args, {
-			widget:  this
-			, title: 'Select a Processor'
+			title: 'Select a Processor'
+			, widgets: [this]
 		});
 	}
 
